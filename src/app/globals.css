@@ -1,0 +1,231 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #FDFCFB;
+  --foreground: #2D2B33;
+  --card: #FFFFFF;
+  --card-foreground: #2D2B33;
+  --popover: #FFFFFF;
+  --popover-foreground: #2D2B33;
+  --primary: #810B38;
+  --primary-foreground: #FDFCFB;
+  --secondary: #F3EBE1;
+  --secondary-foreground: #810B38;
+  --muted: #F3EBE1;
+  --muted-foreground: #767380;
+  --accent: #810B38;
+  --accent-foreground: #FDFCFB;
+  --destructive: #ef4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #E8DFD5;
+  --input: #E8DFD5;
+  --ring: #810B38;
+  --radius: 0.5rem;
+
+  --sidebar-bg: #FFFFFF;
+  --sidebar-border: #E8DFD5;
+}
+
+.dark {
+  --background: #1C1B20;
+  --foreground: #FDFCFB;
+  --card: #27252C;
+  --card-foreground: #FDFCFB;
+  --popover: #27252C;
+  --popover-foreground: #FDFCFB;
+  --primary: #9D1548;
+  /* Slightly brighter for dark mode contrast */
+  --primary-foreground: #FDFCFB;
+  --secondary: #37353E;
+  --secondary-foreground: #FDFCFB;
+  --muted: #37353E;
+  --muted-foreground: #A19DAB;
+  --accent: #9D1548;
+  --accent-foreground: #FDFCFB;
+  --destructive: #ef4444;
+  --destructive-foreground: #FDFCFB;
+  --border: #3F3C47;
+  --input: #3F3C47;
+  --ring: #9D1548;
+
+  --sidebar-bg: #151419;
+  --sidebar-border: #2C2A33;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar-bg);
+  --color-sidebar-border: var(--sidebar-border);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-manrope), sans-serif;
+  }
+}
+
+/* Hide scrollbar utility for modals */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* Print Media Stylesheet for Premium PDF Export */
+@media print {
+
+  aside,
+  .no-print,
+  button,
+  input,
+  select,
+  [role="button"],
+  .no-print-wrapper {
+    display: none !important;
+  }
+
+  main {
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .card,
+  .border-border {
+    border-color: #d1d5db !important;
+    /* Lighter border for clean printing */
+    box-shadow: none !important;
+  }
+}
+
+/* Custom Premium UI/UX Interactions */
+button,
+a,
+[role="button"] {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+button:active,
+a:active,
+[role="button"]:active {
+  transform: scale(0.96);
+}
+
+/* Glowing Form Focus Rings */
+input,
+textarea,
+select {
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(129, 11, 56, 0.15) !important;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  box-shadow: 0 0 0 3px rgba(157, 21, 72, 0.25) !important;
+}
+
+/* Premium Card Hover Glow Effects (Desktop and responsive) */
+.card,
+[class*="rounded-xl"][class*="border"] {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover,
+[class*="rounded-xl"][class*="border"]:hover {
+  transform: translateY(-2px);
+  border-color: rgba(129, 11, 56, 0.25);
+  box-shadow: 0 12px 24px -10px rgba(129, 11, 56, 0.08);
+}
+
+.dark .card:hover,
+.dark [class*="rounded-xl"][class*="border"]:hover {
+  border-color: rgba(157, 21, 72, 0.35);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.4);
+}
+
+/* Premium Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(129, 11, 56, 0.15);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(129, 11, 56, 0.3);
+}
+
+/* Premium Fintech Numeric Typography: Manrope Font with Tabular & Lining Figures */
+.font-number,
+input[type="number"],
+input[placeholder*="0"],
+[class*="text-2xl"],
+[class*="text-3xl"],
+[class*="text-xl"],
+[class*="text-lg"].font-bold,
+[class*="font-extrabold"],
+[class*="font-black"],
+svg text {
+  font-family: var(--font-manrope), sans-serif !important;
+  font-feature-settings: "tnum" on, "lnum" on !important;
+}

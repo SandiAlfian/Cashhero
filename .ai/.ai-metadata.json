@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "created": "2025-05-24",
+  "project": "Cashhero",
+  "type": "ai-context",
+  "compatibility": {
+    "claude": true,
+    "cursor": true,
+    "windsurf": true,
+    "copilot": true,
+    "generic": true
+  },
+  "specifications": {
+    "architecture": "architecture.md",
+    "ui": "ui-standard.md",
+    "workflow": "execution-flow.md",
+    "config": "project-config.json"
+  },
+  "templates": {
+    "newProject": "new-project-template.md"
+  },
+  "platformRules": {
+    "cursor": ".cursorrules",
+    "claude": ".claude-rules"
+  },
+  "languages": ["id", "en"],
+  "techStack": {
+    "framework": "Next.js",
+    "version": "15",
+    "ui": "shadcn/ui",
+    "state": "Zustand",
+    "styling": "Tailwind CSS v4",
+    "language": "TypeScript"
+  },
+  "features": {
+    "darkMode": true,
+    "responsive": true,
+    "i18n": true,
+    "persistedState": true
+  }
+}

@@ -1,0 +1,8 @@
+# .ai/ folder should be committed to git
+# This folder contains AI agent context and configuration
+# All files in this directory are safe to commit
+
+# Ignore temporary AI agent files (if any)
+*.tmp
+*.temp
+.ai-session-*

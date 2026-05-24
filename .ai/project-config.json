@@ -1,0 +1,37 @@
+{
+  "projectName": "Cashhero",
+  "techStack": {
+    "framework": "Next.js 15",
+    "ui": "shadcn/ui + Tailwind CSS v4",
+    "state": "Zustand",
+    "language": "TypeScript",
+    "styling": "CSS Variables + Tailwind",
+    "animation": "Framer Motion",
+    "icons": "Lucide React"
+  },
+  "directories": {
+    "app": "src/app",
+    "components": "src/components",
+    "lib": "src/lib",
+    "store": "src/store",
+    "hooks": "src/hooks"
+  },
+  "aliases": {
+    "@": ".",
+    "@/components": "./src/components",
+    "@/lib": "./src/lib",
+    "@/store": "./src/store",
+    "@/hooks": "./src/hooks"
+  },
+  "theme": {
+    "primaryColor": "#810B38",
+    "darkMode": true,
+    "cssVariables": true
+  },
+  "patterns": {
+    "stateManagement": "Zustand with persist",
+    "componentLibrary": "shadcn/ui",
+    "formComponents": "Custom shadcn/ui (no native selects)",
+    "internationalization": "Custom i18n with store"
+  }
+}

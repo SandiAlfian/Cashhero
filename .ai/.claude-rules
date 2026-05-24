@@ -1,0 +1,41 @@
+# Claude AI Project Rules
+
+## Context Priority
+1. .ai/ folder specifications (highest priority)
+2. Project-specific patterns
+3. Framework conventions
+4. General best practices
+
+## Key Specifications Files
+- `.ai/architecture.md` - Tech stack, structure, TypeScript rules
+- `.ai/ui-standard.md` - Design system, colors, typography, layout
+- `.ai/execution-flow.md` - Development workflow and debugging
+- `.ai/project-config.json` - Machine-readable configuration
+
+## Project Context
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript strict mode
+- **UI**: shadcn/ui + Tailwind CSS v4
+- **State**: Zustand with persist
+- **Styling**: CSS variables with dark mode
+
+## Critical Rules
+- All types must be explicitly declared (no implicit any)
+- Use absolute imports with @ alias
+- State changes go through Zustand stores
+- Use shadcn/ui components as base
+- No native HTML selects - use custom Select component
+- Apply smooth transitions and hover effects
+- Support dark mode with CSS variables
+- Use Manrope font with tabular figures for numbers
+
+## Development Pattern
+1. Analyze existing patterns in codebase
+2. Define TypeScript interfaces first
+3. Create/update Zustand store if state needed
+4. Build component using existing patterns
+5. Apply premium UI effects (transitions, glows, hovers)
+6. Test responsive design and dark mode
+
+## Reference
+Always check `.ai/` folder for detailed specifications before making changes.

@@ -1,0 +1,49 @@
+# Cursor AI Rules
+
+## Tech Stack
+- Next.js 15 with App Router
+- TypeScript (strict mode)
+- Tailwind CSS v4 with CSS variables
+- shadcn/ui components (base-nova style)
+- Zustand for state management
+- Framer Motion for animations
+
+## Code Style
+- Use absolute imports with @ alias
+- All types must be explicitly declared
+- Use cn() utility for class merging
+- Components in src/components/, stores in src/store/
+- Follow existing patterns in the codebase
+
+## UI/UX Standards
+- Primary color: #810B38 (burgundy)
+- Use Manrope font for numbers (tabular figures)
+- Smooth transitions (0.2-0.3s cubic-bezier)
+- No native <select> - use shadcn/ui Select
+- Generous whitespace (max-w-5xl mx-auto)
+- Card hover effects with subtle lift
+- Dark mode support required
+
+## Development Workflow
+1. Read existing patterns before creating new components
+2. Create/update Zustand stores first for state changes
+3. Build components using shadcn/ui as base
+4. Apply premium UI effects (transitions, hover states)
+5. Test dark mode and mobile responsiveness
+
+## File Structure
+```
+src/
+├── app/          # Next.js pages
+├── components/   # React components
+│   └── ui/      # shadcn/ui components
+├── lib/         # Utilities
+├── store/       # Zustand stores
+└── hooks/       # Custom hooks
+```
+
+## Important
+- Always use TypeScript interfaces for state
+- Use persist middleware for Zustand stores
+- Check .ai/ folder for detailed specifications
+- Follow the execution flow in .ai/execution-flow.md
