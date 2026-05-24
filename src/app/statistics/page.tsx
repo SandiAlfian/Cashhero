@@ -870,7 +870,7 @@ export default function StatisticsPage() {
       }
     })
     if (pts.length === 1) {
-      return [{ date: language === 'id' ? "Mulai" : "Start", dateEn: "Start", income: 0, expense: 0 }, ...pts]
+      return [{ date: language === 'id' ? 'Mulai' : 'Start', dateEn: 'Start', income: 0, expense: 0 }, ...pts]
     }
     return pts
   }, [filteredTransactions, filter, language])
@@ -1219,7 +1219,7 @@ export default function StatisticsPage() {
             className="px-4 py-2.5 bg-muted/40 hover:bg-muted/70 text-foreground border border-border font-semibold text-sm rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer duration-200"
           >
             <FileSpreadsheet className="w-4 h-4 text-green-600 dark:text-green-400" />
-            <span>{language === 'id' ? "Ekspor Excel" : "Export Excel"}</span>
+            <span>{language === 'id' ? 'Ekspor Excel' : 'Export Excel'}</span>
           </button>
           <button
             onClick={() => {
@@ -1233,7 +1233,7 @@ export default function StatisticsPage() {
             className="px-4 py-2.5 bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-sm rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer duration-200"
           >
             <FileText className="w-4 h-4" />
-            <span>{language === 'id' ? "Ekspor PDF" : "Export PDF"}</span>
+            <span>{language === 'id' ? 'Ekspor PDF' : 'Export PDF'}</span>
           </button>
         </div>
       </div>
@@ -1413,7 +1413,7 @@ export default function StatisticsPage() {
         <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              {language === 'id' ? "Selisih Arus Kas" : "Net Flow"}
+              {language === 'id' ? 'Selisih Arus Kas' : 'Net Flow'}
             </CardTitle>
             <div className={`p-2 rounded-full ${netFlow >= 0 ? 'bg-blue-500/10' : 'bg-amber-500/10'}`}>
               <TrendingUp className={`h-4 w-4 ${netFlow >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-amber-600 dark:text-amber-400'}`} />
@@ -1461,21 +1461,21 @@ export default function StatisticsPage() {
                 <button
                   onClick={handleExportChartExcel}
                   className="p-2 hover:bg-muted/70 text-green-600 dark:text-green-400 rounded-md transition-all cursor-pointer hover:scale-105"
-                  title={language === 'id' ? "Ekspor Data ke Excel" : "Export Data to Excel"}
+                  title={language === 'id' ? 'Ekspor Data ke Excel' : 'Export Data to Excel'}
                 >
                   <FileSpreadsheet className="w-4 h-4" />
                 </button>
                 <button
                   onClick={handleExportChartPDF}
                   className="p-2 hover:bg-muted/70 text-red-600 dark:text-red-400 rounded-md transition-all cursor-pointer hover:scale-105"
-                  title={language === 'id' ? "Ekspor PDF Laporan Grafik" : "Export Chart PDF Report"}
+                  title={language === 'id' ? 'Ekspor PDF Laporan Grafik' : 'Export Chart PDF Report'}
                 >
                   <FileText className="w-4 h-4" />
                 </button>
                 <button
                   onClick={handleExportChartImage}
                   className="p-2 hover:bg-muted/70 text-blue-600 dark:text-blue-400 rounded-md transition-all cursor-pointer hover:scale-105"
-                  title={language === 'id' ? "Unduh Gambar Grafik" : "Download Chart Image"}
+                  title={language === 'id' ? 'Unduh Gambar Grafik' : 'Download Chart Image'}
                 >
                   <FileImage className="w-4 h-4" />
                 </button>
@@ -1500,10 +1500,10 @@ export default function StatisticsPage() {
                     }[chartMode]
                     
                     const currentLabel = {
-                      line: language === 'id' ? "Garis" : "Line",
-                      bar: language === 'id' ? "Batang Komparasi" : "Side-by-Side Bar",
-                      stacked: language === 'id' ? "Batang Akumulasi" : "Stacked Bar",
-                      netFlow: language === 'id' ? "Arus Bersih" : "Net Savings Flow"
+                      line: language === 'id' ? 'Garis' : 'Line',
+                      bar: language === 'id' ? 'Batang Komparasi' : 'Side-by-Side Bar',
+                      stacked: language === 'id' ? 'Batang Akumulasi' : 'Stacked Bar',
+                      netFlow: language === 'id' ? 'Arus Bersih' : 'Net Savings Flow'
                     }[chartMode]
 
                     return (
@@ -1528,10 +1528,10 @@ export default function StatisticsPage() {
                       {(['line', 'bar', 'stacked', 'netFlow'] as const).map((m) => {
                         const isActive = chartMode === m
                         const modeLabel = {
-                          line: language === 'id' ? "Tren Garis" : "Line Trend",
-                          bar: language === 'id' ? "Batang Komparasi" : "Compare Bar",
-                          stacked: language === 'id' ? "Batang Akumulasi" : "Stacked Bar",
-                          netFlow: language === 'id' ? "Arus Bersih" : "Net Flow"
+                          line: language === 'id' ? 'Tren Garis' : 'Line Trend',
+                          bar: language === 'id' ? 'Batang Komparasi' : 'Compare Bar',
+                          stacked: language === 'id' ? 'Batang Akumulasi' : 'Stacked Bar',
+                          netFlow: language === 'id' ? 'Arus Bersih' : 'Net Flow'
                         }[m]
                         const Icon = {
                           line: LineChart,
@@ -1569,9 +1569,9 @@ export default function StatisticsPage() {
                 {chartMode === 'netFlow' ? (
                   <span className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded-md bg-green-500" />
-                    <span>{language === 'id' ? "Surplus Bersih" : "Net Surplus"}</span>
+                    <span>{language === 'id' ? 'Surplus Bersih' : 'Net Surplus'}</span>
                     <span className="w-3 h-3 rounded-md bg-primary" />
-                    <span>{language === 'id' ? "Defisit Bersih" : "Net Deficit"}</span>
+                    <span>{language === 'id' ? 'Defisit Bersih' : 'Net Deficit'}</span>
                   </span>
                 ) : (
                   <>
@@ -1597,7 +1597,7 @@ export default function StatisticsPage() {
                 </div>
                 <div>
                   <p className="text-foreground font-bold text-sm">
-                    {language === 'id' ? "Arus Kas Kosong" : "No Cash Flow Data"}
+                    {language === 'id' ? 'Arus Kas Kosong' : 'No Cash Flow Data'}
                   </p>
                   <p className="text-xs text-muted-foreground max-w-xs mt-1.5 leading-relaxed">
                     {language === 'id'
@@ -1937,7 +1937,7 @@ export default function StatisticsPage() {
                             ? 'text-blue-600 dark:text-blue-400' 
                             : 'text-amber-600 dark:text-amber-400'
                         }`}>
-                          <span>{language === 'id' ? "Selisih:" : "Net:"}</span>
+                          <span>{language === 'id' ? 'Selisih:' : 'Net:'}</span>
                           <span>
                             {((displayCashFlow[activeLineIndex].income - displayCashFlow[activeLineIndex].expense) >= 0 ? "+" : "") + 
                              formatCurrency(displayCashFlow[activeLineIndex].income - displayCashFlow[activeLineIndex].expense, language)}
@@ -1947,7 +1947,7 @@ export default function StatisticsPage() {
                         {filter === 'quarterly' && (
                           <div className="text-[9px] text-primary/80 dark:text-rose-400 font-bold border-t border-border/40 dark:border-zinc-700/60 pt-1 mt-1 flex items-center gap-1 animate-pulse">
                             <TrendingUp className="w-2.5 h-2.5 text-primary dark:text-rose-400" />
-                            <span>{language === 'id' ? "Klik untuk rincian harian" : "Click for daily details"}</span>
+                            <span>{language === 'id' ? 'Klik untuk rincian harian' : 'Click for daily details'}</span>
                           </div>
                         )}
                       </div>
@@ -1981,7 +1981,7 @@ export default function StatisticsPage() {
                 </div>
                 <div>
                   <p className="text-foreground font-bold text-sm">
-                    {language === 'id' ? "Belum Ada Pengeluaran" : "No Expenses Yet"}
+                    {language === 'id' ? 'Belum Ada Pengeluaran' : 'No Expenses Yet'}
                   </p>
                   <p className="text-xs text-muted-foreground max-w-xs mt-1.5 leading-relaxed">
                     {language === 'id'
@@ -2039,7 +2039,7 @@ export default function StatisticsPage() {
                     ) : (
                       <>
                         <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">
-                          {language === 'id' ? "Total Pengeluaran" : "Total Expense"}
+                          {language === 'id' ? 'Total Pengeluaran' : 'Total Expense'}
                         </span>
                         <span className="text-sm font-extrabold text-foreground mt-0.5">
                           {mounted ? formatCurrency(totalSpent, language) : "Rp 0"}
@@ -2120,7 +2120,7 @@ export default function StatisticsPage() {
                       )
                     }}
                     className="p-2 bg-muted/40 hover:bg-muted/70 text-foreground border border-border rounded-lg transition-all cursor-pointer"
-                    title={language === 'id' ? "Ekspor Excel Bulan Ini" : "Export Excel This Month"}
+                    title={language === 'id' ? 'Ekspor Excel Bulan Ini' : 'Export Excel This Month'}
                   >
                     <FileSpreadsheet className="w-4 h-4 text-green-600 dark:text-green-400" />
                   </button>
@@ -2134,7 +2134,7 @@ export default function StatisticsPage() {
                       )
                     }}
                     className="p-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all cursor-pointer"
-                    title={language === 'id' ? "Cetak PDF Laporan" : "Print PDF Report"}
+                    title={language === 'id' ? 'Cetak PDF Laporan' : 'Print PDF Report'}
                   >
                     <FileText className="w-4 h-4" />
                   </button>
@@ -2153,7 +2153,7 @@ export default function StatisticsPage() {
                 <span className="font-bold text-primary text-sm">{formatCurrency(monthOut, language)}</span>
               </div>
               <div>
-                <span className="text-muted-foreground block text-[9px] uppercase font-bold tracking-wider mb-0.5">{language === 'id' ? "Saldo Bersih" : "Net Flow"}</span>
+                <span className="text-muted-foreground block text-[9px] uppercase font-bold tracking-wider mb-0.5">{language === 'id' ? 'Saldo Bersih' : 'Net Flow'}</span>
                 <span className={`font-extrabold text-sm ${monthNet >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-amber-600 dark:text-amber-400'}`}>
                   {monthNet >= 0 ? "+" : ""}{formatCurrency(monthNet, language)}
                 </span>
@@ -2164,12 +2164,12 @@ export default function StatisticsPage() {
             <div ref={modalChartRef} className="relative w-full border border-border/65 bg-muted/5 rounded-xl p-3 mb-6">
               <h4 className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5 uppercase tracking-wider text-muted-foreground">
                 <BarChart3 className="w-3.5 h-3.5 text-primary" />
-                {language === 'id' ? "Grafik Harian Bulan Ini" : "Daily Trend Chart This Month"}
+                {language === 'id' ? 'Grafik Harian Bulan Ini' : 'Daily Trend Chart This Month'}
               </h4>
               
               {monthDailyFlow.length === 0 ? (
                 <div className="py-8 text-center text-xs text-muted-foreground">
-                  {language === 'id' ? "Tidak ada transaksi harian." : "No daily transactions recorded."}
+                  {language === 'id' ? 'Tidak ada transaksi harian.' : 'No daily transactions recorded.'}
                 </div>
               ) : (
                 <div className="w-full relative overflow-visible select-none">
@@ -2282,7 +2282,7 @@ export default function StatisticsPage() {
             <div className="flex flex-col gap-2">
               <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider text-muted-foreground border-b border-border/50 pb-2">
                 <Calendar className="w-3.5 h-3.5 text-primary" />
-                {language === 'id' ? "Daftar Transaksi Bulan Ini" : "Transactions List This Month"}
+                {language === 'id' ? 'Daftar Transaksi Bulan Ini' : 'Transactions List This Month'}
               </h4>
               
               <div className="max-h-[220px] overflow-y-auto pr-1 space-y-2">
@@ -2316,7 +2316,7 @@ export default function StatisticsPage() {
                 onClick={() => setSelectedMonthDetail(null)}
                 className="bg-primary text-primary-foreground hover:bg-primary/95 text-xs font-semibold rounded-lg px-5 py-2 cursor-pointer shadow-sm"
               >
-                {language === 'id' ? "Tutup" : "Close"}
+                {language === 'id' ? 'Tutup' : 'Close'}
               </Button>
             </div>
           </DialogContent>

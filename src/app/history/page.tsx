@@ -360,14 +360,14 @@ export default function HistoryPage() {
             className="px-4 py-2.5 bg-muted/40 hover:bg-muted/70 text-foreground border border-border font-semibold text-sm rounded-lg shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer duration-200"
           >
             <FileSpreadsheet className="w-4 h-4 text-green-600 dark:text-green-400" />
-            <span>{language === 'id' ? "Ekspor Excel" : "Export Excel"}</span>
+            <span>{language === 'id' ? 'Ekspor Excel' : 'Export Excel'}</span>
           </button>
           <button
             onClick={handlePrintMain}
             className="px-4 py-2.5 bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-sm rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer duration-200"
           >
             <FileText className="w-4 h-4" />
-            <span>{language === 'id' ? "Ekspor PDF" : "Export PDF"}</span>
+            <span>{language === 'id' ? 'Ekspor PDF' : 'Export PDF'}</span>
           </button>
         </div>
       </motion.div>
@@ -519,19 +519,19 @@ export default function HistoryPage() {
                   <TableHeader className="bg-muted/40">
                     <TableRow className="border-border/30 hover:bg-muted/40 select-none">
                       <TableHead className="text-muted-foreground font-extrabold text-xs uppercase tracking-wider py-3.5 px-6">
-                        {language === 'id' ? "Periode" : "Period"}
+                        {language === 'id' ? 'Periode' : 'Period'}
                       </TableHead>
                       <TableHead className="text-muted-foreground font-extrabold text-xs uppercase tracking-wider py-3.5 text-center px-6">
-                        {language === 'id' ? "Jumlah Transaksi" : "Transactions Count"}
+                        {language === 'id' ? 'Jumlah Transaksi' : 'Transactions Count'}
                       </TableHead>
                       <TableHead className="text-muted-foreground font-extrabold text-xs uppercase tracking-wider py-3.5 text-right px-6">
-                        {language === 'id' ? "Pemasukan (+)" : "Total Income"}
+                        {language === 'id' ? 'Pemasukan (+)' : 'Total Income'}
                       </TableHead>
                       <TableHead className="text-muted-foreground font-extrabold text-xs uppercase tracking-wider py-3.5 text-right px-6">
-                        {language === 'id' ? "Pengeluaran (-)" : "Total Expense"}
+                        {language === 'id' ? 'Pengeluaran (-)' : 'Total Expense'}
                       </TableHead>
                       <TableHead className="text-muted-foreground font-extrabold text-xs uppercase tracking-wider py-3.5 text-right px-6">
-                        {language === 'id' ? "Saldo Bersih" : "Net Balance"}
+                        {language === 'id' ? 'Saldo Bersih' : 'Net Balance'}
                       </TableHead>
                       <TableHead className="w-[100px] no-print py-3.5 px-6"></TableHead>
                     </TableRow>
@@ -702,7 +702,7 @@ export default function HistoryPage() {
                   </span>
                 </div>
                 <div className="p-3.5 rounded-xl bg-card/50 border border-border/30 flex flex-col">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">{language === 'id' ? "Arus Kas Bersih" : "Net Cash Flow"}</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">{language === 'id' ? 'Arus Kas Bersih' : 'Net Cash Flow'}</span>
                   <span className={`text-base font-extrabold tracking-tight mt-0.5 ${activeGroup.net >= 0 ? "text-emerald-500" : "text-primary"}`}>
                     {activeGroup.net < 0 ? "-" : ""}{formatCurrency(Math.abs(activeGroup.net), language)}
                   </span>

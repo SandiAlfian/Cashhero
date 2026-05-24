@@ -526,14 +526,14 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-foreground text-lg font-bold flex items-center gap-2">
                   <User className="w-5 h-5 text-primary" />
-                  {language === 'id' ? "Profil & Identitas" : "Profile & Identity"}
+                  {language === 'id' ? 'Profil & Identitas' : 'Profile & Identity'}
                 </CardTitle>
                 <span className="text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-full select-none">
-                  {language === 'id' ? "Aktif" : "Active"}
+                  {language === 'id' ? 'Aktif' : 'Active'}
                 </span>
               </div>
               <CardDescription className="text-xs">
-                {language === 'id' ? "Kelola informasi profil dan kredensial akses." : "Manage profile information and access credentials."}
+                {language === 'id' ? 'Kelola informasi profil dan kredensial akses.' : 'Manage profile information and access credentials.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-5 flex-1 flex flex-col justify-between gap-6">
@@ -603,7 +603,7 @@ export default function SettingsPage() {
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2 px-3 rounded-lg font-bold text-xs transition-all duration-200 cursor-pointer text-center shadow-md flex items-center justify-center gap-1.5 select-none"
                   >
                     <Save className="w-3.5 h-3.5" />
-                    {language === 'id' ? "Simpan" : "Save"}
+                    {language === 'id' ? 'Simpan' : 'Save'}
                   </button>
                 </div>
               ) : (
@@ -629,11 +629,11 @@ export default function SettingsPage() {
                   {t('settingsPreferences')}
                 </CardTitle>
                 <span className="text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-full select-none">
-                  {language === 'id' ? "Aktif" : "Active"}
+                  {language === 'id' ? 'Aktif' : 'Active'}
                 </span>
               </div>
               <CardDescription className="text-xs">
-                {language === 'id' ? "Konfigurasi format mata uang dan parameter bawaan." : "Configure currency formats and default parameters."}
+                {language === 'id' ? 'Konfigurasi format mata uang dan parameter bawaan.' : 'Configure currency formats and default parameters.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-5 flex-1 flex flex-col justify-between gap-6">
@@ -700,7 +700,7 @@ export default function SettingsPage() {
 
                 <div className="grid gap-1.5 relative" ref={filterDropdownRef}>
                   <label className="text-[10px] font-extrabold uppercase text-muted-foreground/80 tracking-wider">
-                    {language === 'id' ? "Default Filter Riwayat" : "Default History Filter"}
+                    {language === 'id' ? 'Default Filter Riwayat' : 'Default History Filter'}
                   </label>
                   <div className="relative">
                     <button
@@ -757,7 +757,7 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between p-3 rounded-xl border border-border/20 bg-muted/10">
                   <div className="space-y-0.5">
                     <h5 className="text-xs font-bold text-foreground">
-                      {language === 'id' ? "Pencatatan Otomatis" : "Automatic Logging"}
+                      {language === 'id' ? 'Pencatatan Otomatis' : 'Automatic Logging'}
                     </h5>
                     <p className="text-[10px] text-muted-foreground">
                       {lt("autoLoggingDesc")}
@@ -784,7 +784,7 @@ export default function SettingsPage() {
                 onClick={handleSavePreferences}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/95 py-2.5 px-4 rounded-lg font-bold text-xs shadow-md transition-all duration-200 cursor-pointer text-center select-none"
               >
-                {language === 'id' ? "Simpan Preferensi" : "Save Preferences"}
+                {language === 'id' ? 'Simpan Preferensi' : 'Save Preferences'}
               </button>
             </CardContent>
           </Card>
@@ -797,14 +797,14 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-foreground text-lg font-bold flex items-center gap-2">
                   <Shield className="w-5 h-5 text-primary" />
-                  {language === 'id' ? "Keamanan & Akses" : "Security & Access"}
+                  {language === 'id' ? 'Keamanan & Akses' : 'Security & Access'}
                 </CardTitle>
                 <span className="text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-full select-none">
                   {securityPIN ? "PIN AKTIF" : "OFF"}
                 </span>
               </div>
               <CardDescription className="text-xs">
-                {language === 'id' ? "Amankan data finansial Anda dengan otorisasi lokal." : "Protect your financial ledger with local authorization."}
+                {language === 'id' ? 'Amankan data finansial Anda dengan otorisasi lokal.' : 'Protect your financial ledger with local authorization.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-5 flex-1 flex flex-col justify-between gap-5">
@@ -924,14 +924,14 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-foreground text-lg font-bold flex items-center gap-2">
                   <Sliders className="w-5 h-5 text-primary" />
-                  {language === 'id' ? "Sistem & Sinkronisasi" : "System & Sync"}
+                  {language === 'id' ? 'Sistem & Sinkronisasi' : 'System & Sync'}
                 </CardTitle>
                 <span className="text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-full select-none">
-                  {language === 'id' ? "Sinkron" : "Synced"}
+                  {language === 'id' ? 'Sinkron' : 'Synced'}
                 </span>
               </div>
               <CardDescription className="text-xs">
-                {language === 'id' ? "Atur performa visual sistem dan ekspor backup basis data." : "Adjust system visual performance and database exports."}
+                {language === 'id' ? 'Atur performa visual sistem dan ekspor backup basis data.' : 'Adjust system visual performance and database exports.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-5 flex-1 flex flex-col justify-between gap-6">
@@ -978,11 +978,11 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <h5 className="text-xs font-black text-foreground uppercase flex items-center gap-1">
-                      {language === 'id' ? "Bahasa Indonesia" : "English (US)"}
+                      {language === 'id' ? 'Bahasa Indonesia' : 'English (US)'}
                       <ArrowRight className="w-3 h-3 text-muted-foreground group-hover/lang:translate-x-1 transition-transform" />
                     </h5>
                     <p className="text-[9px] text-muted-foreground mt-0.5">
-                      {language === 'id' ? "Sentuh untuk ubah ke English" : "Tap to change to Indonesian"}
+                      {language === 'id' ? 'Sentuh untuk ubah ke English' : 'Tap to change to Indonesian'}
                     </p>
                   </div>
                 </div>
@@ -1022,7 +1022,7 @@ export default function SettingsPage() {
                     title={lt("resetDesc")}
                   >
                     <Trash2 className="w-4 h-4 text-red-500" />
-                    <span className="text-[10px] font-bold">{language === 'id' ? "Reset Data" : "Reset App"}</span>
+                    <span className="text-[10px] font-bold">{language === 'id' ? 'Reset Data' : 'Reset App'}</span>
                   </button>
                 </div>
               </div>
@@ -1039,7 +1039,7 @@ export default function SettingsPage() {
         <Info className="w-5 h-5 text-primary shrink-0 mt-0.5 animate-pulse" />
         <div className="flex flex-col gap-0.5">
           <p className="font-extrabold uppercase text-[10px] tracking-wider text-foreground">
-            {language === 'id' ? "INFORMASI APLIKASI" : "APPLICATION INFO"}
+            {language === 'id' ? 'INFORMASI APLIKASI' : 'APPLICATION INFO'}
           </p>
           <p className="text-[11px] leading-relaxed">
             {language === 'id' 
@@ -1093,8 +1093,8 @@ export default function SettingsPage() {
               </h3>
               <p className="text-xs text-muted-foreground text-center mt-1 max-w-[240px]">
                 {pinStep === "new" 
-                  ? (language === 'id' ? "Buat 6 digit sandi PIN pengaman." : "Create a 6-digit security PIN code.")
-                  : (language === 'id' ? "Masukkan kembali PIN untuk validasi." : "Re-enter the PIN code for validation.")}
+                  ? (language === 'id' ? 'Buat 6 digit sandi PIN pengaman.' : 'Create a 6-digit security PIN code.')
+                  : (language === 'id' ? 'Masukkan kembali PIN untuk validasi.' : 'Re-enter the PIN code for validation.')}
               </p>
 
               {/* Dots Progress */}
@@ -1178,10 +1178,10 @@ export default function SettingsPage() {
                   {/* Danger Details */}
                   <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-xl space-y-1.5 my-2">
                     {[
-                      language === 'id' ? "Semua riwayat transaksi akan dihapus selamanya" : "All transaction history will be permanently deleted",
-                      language === 'id' ? "Nilai modal dan alokasi portofolio investasi dikosongkan" : "Investment portfolios and capital will be emptied",
-                      language === 'id' ? "Semua target tabungan & anggaran dihapus" : "All saving goals & budget constraints removed",
-                      language === 'id' ? "Kredensial keamanan (PIN & sidik jari) dihilangkan" : "Security credentials (PIN & biometrics) removed",
+                      language === 'id' ? 'Semua riwayat transaksi akan dihapus selamanya' : 'All transaction history will be permanently deleted',
+                      language === 'id' ? 'Nilai modal dan alokasi portofolio investasi dikosongkan' : 'Investment portfolios and capital will be emptied',
+                      language === 'id' ? 'Semua target tabungan & anggaran dihapus' : 'All saving goals & budget constraints removed',
+                      language === 'id' ? 'Kredensial keamanan (PIN & sidik jari) dihilangkan' : 'Security credentials (PIN & biometrics) removed',
                     ].map((bullet, i) => (
                       <div key={i} className="flex items-start gap-2 text-[10px] text-red-500/90 font-semibold leading-normal">
                         <span className="block w-1.5 h-1.5 rounded-full bg-red-500 shrink-0 mt-1" />
@@ -1249,7 +1249,7 @@ export default function SettingsPage() {
                     {lt("importTitle")}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {language === 'id' ? "Pulihkan data dari file ekspor JSON sebelumnya." : "Restore ledger data from a previously exported JSON file."}
+                    {language === 'id' ? 'Pulihkan data dari file ekspor JSON sebelumnya.' : 'Restore ledger data from a previously exported JSON file.'}
                   </p>
                 </div>
               </div>

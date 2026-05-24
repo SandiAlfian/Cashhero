@@ -62,19 +62,19 @@ export function QuickEntryModal() {
   // Dynamic contextual placeholders per tab active
   const categoryPlaceholder = React.useMemo(() => {
     if (activeTab === 'in') {
-      return language === 'id' ? "Gaji, Bonus, Dividen, dll" : "Salary, Bonus, Dividend, etc."
+      return language === 'id' ? 'Gaji, Bonus, Dividen, dll' : 'Salary, Bonus, Dividend, etc.'
     }
-    return language === 'id' ? "Makanan, Transport, Belanja, dll" : "Food, Transport, Shopping, etc."
+    return language === 'id' ? 'Makanan, Transport, Belanja, dll' : 'Food, Transport, Shopping, etc.'
   }, [activeTab, language])
 
   const notePlaceholder = React.useMemo(() => {
     if (activeTab === 'in') {
-      return language === 'id' ? "Gaji bulanan, bonus proyek, dll" : "Monthly salary, project bonus, etc."
+      return language === 'id' ? 'Gaji bulanan, bonus proyek, dll' : 'Monthly salary, project bonus, etc.'
     }
     if (activeTab === 'saving') {
-      return language === 'id' ? "Tabungan bulanan, dana darurat, dll" : "Monthly savings, emergency fund, etc."
+      return language === 'id' ? 'Tabungan bulanan, dana darurat, dll' : 'Monthly savings, emergency fund, etc.'
     }
-    return language === 'id' ? "Makan siang, bensin, token listrik, dll" : "Lunch, gasoline, electricity token, etc."
+    return language === 'id' ? 'Makan siang, bensin, token listrik, dll' : 'Lunch, gasoline, electricity token, etc.'
   }, [activeTab, language])
 
   // Filter unique categories dynamically based on query (max 5 suggestions)
@@ -408,7 +408,7 @@ export function QuickEntryModal() {
                     <Input
                       id="savingGoalSearchInput"
                       type="text"
-                      placeholder={language === 'id' ? "Cari target tabungan..." : "Search saving goal..."}
+                      placeholder={language === 'id' ? 'Cari target tabungan...' : 'Search saving goal...'}
                       value={goalSearchQuery}
                       onChange={(e) => {
                         setGoalSearchQuery(e.target.value)
@@ -487,7 +487,7 @@ export function QuickEntryModal() {
                           transition={{ duration: 0.15, ease: "easeOut" }}
                           className="absolute z-50 left-0 right-0 top-full mt-1.5 p-4 rounded-lg border border-border bg-background/98 shadow-xl backdrop-blur-md flex items-center justify-center text-xs text-muted-foreground"
                         >
-                          {language === 'id' ? "Tidak ada target tabungan yang cocok" : "No matching saving goals"}
+                          {language === 'id' ? 'Tidak ada target tabungan yang cocok' : 'No matching saving goals'}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -505,7 +505,7 @@ export function QuickEntryModal() {
                         }}
                         className="self-start text-[10px] font-extrabold text-primary hover:underline uppercase tracking-wider flex items-center gap-1 cursor-pointer"
                       >
-                        <span>{language === 'id' ? "+ Buat Target Sekarang" : "+ Create Goal Now"}</span>
+                        <span>{language === 'id' ? '+ Buat Target Sekarang' : '+ Create Goal Now'}</span>
                         <span>&rarr;</span>
                       </button>
                     </div>

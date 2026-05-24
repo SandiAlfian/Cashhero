@@ -226,7 +226,7 @@ function DashboardCashFlowChart({
       }
     })
     if (pts.length === 1) {
-      return [{ date: language === 'id' ? "Mulai" : "Start", dateEn: "Start", income: 0, expense: 0 }, ...pts]
+      return [{ date: language === 'id' ? 'Mulai' : 'Start', dateEn: 'Start', income: 0, expense: 0 }, ...pts]
     }
     return pts
   }, [filteredTransactions, filter, language])
@@ -356,7 +356,7 @@ function DashboardCashFlowChart({
           <div className="h-[260px] w-full rounded-md border border-dashed border-border/60 bg-muted/5 flex flex-col items-center justify-center gap-3 text-center p-6">
             <TrendingUp className="w-8 h-8 text-primary/40 animate-pulse" />
             <p className="text-xs text-muted-foreground">
-              {language === 'id' ? "Belum ada data transaksi." : "No transaction data yet."}
+              {language === 'id' ? 'Belum ada data transaksi.' : 'No transaction data yet.'}
             </p>
           </div>
         ) : (
@@ -762,14 +762,14 @@ export default function Home() {
         initialLogs.push({
           amount: initialVal,
           type: 'capital_change',
-          note: language === 'id' ? "Alokasi Modal Awal" : "Initial Capital Allocation"
+          note: language === 'id' ? 'Alokasi Modal Awal' : 'Initial Capital Allocation'
         })
       }
       if (glVal !== 0) {
         initialLogs.push({
           amount: Math.abs(glVal),
           type: glVal >= 0 ? 'profit' : 'loss',
-          note: language === 'id' ? "Penyesuaian Nilai Awal" : "Initial Value Adjustment"
+          note: language === 'id' ? 'Penyesuaian Nilai Awal' : 'Initial Value Adjustment'
         })
       }
 
@@ -871,7 +871,7 @@ export default function Home() {
         : `Partial Asset Liquidation`
     )
 
-    const noteTemplate = language === 'id' ? "Likuidasi Sebagian: [Nama Aset]" : "Partial Liquidation: [Nama Aset]"
+    const noteTemplate = language === 'id' ? 'Likuidasi Sebagian: [Nama Aset]' : 'Partial Liquidation: [Nama Aset]'
     const note = noteTemplate.replace('[Nama Aset]', liqAsset.name)
 
     addTransaction({
@@ -1042,7 +1042,7 @@ export default function Home() {
                 {t('portfolioAsset')}
               </CardTitle>
               <span className="text-[10px] text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-full transition-all group-hover:bg-primary group-hover:text-primary-foreground">
-                {language === 'id' ? "Kelola" : "Manage"} &rarr;
+                {language === 'id' ? 'Kelola' : 'Manage'} &rarr;
               </span>
             </CardHeader>
             <CardContent>
@@ -1207,7 +1207,7 @@ export default function Home() {
               {/* Add Asset Button / Title */}
               <div className="flex justify-between items-center pb-2 border-b border-border/60">
                 <h3 className="text-sm font-bold text-foreground">
-                  {language === 'id' ? "Daftar Aset Investasi" : "Investment Assets List"}
+                  {language === 'id' ? 'Daftar Aset Investasi' : 'Investment Assets List'}
                 </h3>
                 <button
                   onClick={handleStartAdd}
@@ -1270,14 +1270,14 @@ export default function Home() {
                                 setAssetHistoryOpen(true)
                               }}
                               className="p-1.5 hover:bg-primary/10 rounded-lg text-primary/70 hover:text-primary transition-colors cursor-pointer"
-                              title={language === 'id' ? "Riwayat Penyesuaian" : "Adjustment History"}
+                              title={language === 'id' ? 'Riwayat Penyesuaian' : 'Adjustment History'}
                             >
                               <History className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleStartPartialLiquidation(asset)}
                               className="p-1.5 hover:bg-green-500/10 rounded-lg text-green-600 dark:text-green-400 hover:text-green-700 transition-colors cursor-pointer"
-                              title={language === 'id' ? "Likuidasi Sebagian" : "Partial Liquidation"}
+                              title={language === 'id' ? 'Likuidasi Sebagian' : 'Partial Liquidation'}
                             >
                               <Coins className="w-3.5 h-3.5" />
                             </button>
@@ -1339,7 +1339,7 @@ export default function Home() {
                   onClick={() => setPortfolioOpen(false)} 
                   className="bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-md text-xs font-semibold rounded-lg px-5 py-2"
                 >
-                  {language === 'id' ? "Selesai" : "Done"}
+                  {language === 'id' ? 'Selesai' : 'Done'}
                 </Button>
               </div>
             </div>
@@ -1364,7 +1364,7 @@ export default function Home() {
                 <div className="grid gap-1.5">
                   <label className="font-semibold text-xs text-muted-foreground">{t('assetName')}</label>
                   <Input 
-                    placeholder={language === 'id' ? "Contoh: Saham BBCA, Bitcoin, Emas Antam" : "e.g. BBCA Stocks, Bitcoin, Gold"}
+                    placeholder={language === 'id' ? 'Contoh: Saham BBCA, Bitcoin, Emas Antam' : 'e.g. BBCA Stocks, Bitcoin, Gold'}
                     value={assetNameInput}
                     onChange={(e) => setAssetNameInput(e.target.value)}
                     className="bg-muted/40 border border-input text-foreground focus-visible:ring-primary h-10 rounded-lg text-sm font-medium"
@@ -1447,7 +1447,7 @@ export default function Home() {
                 {/* Profit/Loss status switch */}
                 <div className="flex items-center justify-between gap-4 bg-muted/40 p-2 rounded-lg border border-border/40">
                   <span className="text-xs text-muted-foreground font-semibold">
-                    {language === 'id' ? "Status Kinerja Mingguan" : "Weekly Performance Status"}
+                    {language === 'id' ? 'Status Kinerja Mingguan' : 'Weekly Performance Status'}
                   </span>
                   <div className="flex gap-1.5">
                     <button
@@ -1558,7 +1558,7 @@ export default function Home() {
           <DialogHeader className="mb-4">
             <DialogTitle className="text-foreground text-lg font-bold tracking-tight flex items-center gap-2">
               <Coins className="w-5 h-5 text-green-600 dark:text-green-400" />
-              {language === 'id' ? "Likuidasi Sebagian Aset" : "Partial Asset Liquidation"}
+              {language === 'id' ? 'Likuidasi Sebagian Aset' : 'Partial Asset Liquidation'}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
               {language === 'id' 
@@ -1571,11 +1571,11 @@ export default function Home() {
             <div className="flex flex-col gap-4">
               <div className="p-3.5 bg-muted/30 rounded-xl border border-border/40 text-xs flex flex-col gap-2">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{language === 'id' ? "Nama Aset:" : "Asset Name:"}</span>
+                  <span className="text-muted-foreground">{language === 'id' ? 'Nama Aset:' : 'Asset Name:'}</span>
                   <span className="font-bold text-foreground">{liqAsset.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{language === 'id' ? "Nilai Bersih Saat Ini:" : "Current Net Value:"}</span>
+                  <span className="text-muted-foreground">{language === 'id' ? 'Nilai Bersih Saat Ini:' : 'Current Net Value:'}</span>
                   <span className="font-bold text-foreground">
                     {formatCurrency(liqAsset.initialCapital + liqAsset.realizedGainLoss, language)}
                   </span>
@@ -1584,7 +1584,7 @@ export default function Home() {
 
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  {language === 'id' ? "Nominal Likuidasi (Rp)" : "Liquidation Amount (Rp)"}
+                  {language === 'id' ? 'Nominal Likuidasi (Rp)' : 'Liquidation Amount (Rp)'}
                 </label>
                 <Input
                   type="text"
@@ -1622,7 +1622,7 @@ export default function Home() {
                   }
                   className="bg-green-600 text-white hover:bg-green-700 cursor-pointer shadow-md text-xs font-semibold rounded-lg px-5 py-2 disabled:opacity-55 disabled:cursor-not-allowed"
                 >
-                  {language === 'id' ? "Likuidasi" : "Liquidate"}
+                  {language === 'id' ? 'Likuidasi' : 'Liquidate'}
                 </Button>
               </div>
             </div>
@@ -1636,7 +1636,7 @@ export default function Home() {
           <DialogHeader className="mb-4">
             <DialogTitle className="text-foreground text-lg font-bold tracking-tight flex items-center gap-2">
               <History className="w-5 h-5 text-primary" />
-              {language === 'id' ? "Riwayat Penyesuaian Aset" : "Asset Adjustment History"}
+              {language === 'id' ? 'Riwayat Penyesuaian Aset' : 'Asset Adjustment History'}
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
               {language === 'id'
@@ -1648,14 +1648,14 @@ export default function Home() {
           {selectedHistoryAsset && (
             <div className="flex flex-col gap-4">
               <div className="p-3 bg-primary/5 rounded-xl border border-primary/20 text-xs flex justify-between items-center font-bold">
-                <span className="text-muted-foreground">{language === 'id' ? "Nama Aset:" : "Asset Name:"}</span>
+                <span className="text-muted-foreground">{language === 'id' ? 'Nama Aset:' : 'Asset Name:'}</span>
                 <span className="text-foreground text-sm font-extrabold">{selectedHistoryAsset.name}</span>
               </div>
 
               {/* Dropdown Filter & Export Buttons */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/40 p-3 rounded-xl border border-border/40 text-xs no-print">
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground font-semibold uppercase">{language === 'id' ? "Filter:" : "Filter:"}</span>
+                  <span className="text-muted-foreground font-semibold uppercase">{language === 'id' ? 'Filter:' : 'Filter:'}</span>
                   
                   {/* Interactive Custom Dropdown Filter */}
                   <div className="relative">
@@ -1668,10 +1668,10 @@ export default function Home() {
                         <span>
                           {
                             {
-                              all: language === 'id' ? "Semua" : "All",
-                              capital_change: language === 'id' ? "Alokasi Modal" : "Capital",
-                              gain_loss: language === 'id' ? "Untung/Rugi" : "Profit & Loss",
-                              liquidation: language === 'id' ? "Likuidasi" : "Liquidation"
+                              all: language === 'id' ? 'Semua' : 'All',
+                              capital_change: language === 'id' ? 'Alokasi Modal' : 'Capital',
+                              gain_loss: language === 'id' ? 'Untung/Rugi' : 'Profit & Loss',
+                              liquidation: language === 'id' ? 'Likuidasi' : 'Liquidation'
                             }[historyFilter]
                           }
                         </span>
@@ -1689,10 +1689,10 @@ export default function Home() {
                           className="absolute left-0 mt-2 w-[160px] bg-background/95 border border-border rounded-xl shadow-xl backdrop-blur-md z-50 p-1 flex flex-col gap-0.5"
                         >
                           {([
-                            { value: 'all', label: language === 'id' ? "Semua" : "All" },
-                            { value: 'capital_change', label: language === 'id' ? "Alokasi Modal" : "Capital" },
-                            { value: 'gain_loss', label: language === 'id' ? "Untung/Rugi" : "Profit & Loss" },
-                            { value: 'liquidation', label: language === 'id' ? "Likuidasi" : "Liquidation" }
+                            { value: 'all', label: language === 'id' ? 'Semua' : 'All' },
+                            { value: 'capital_change', label: language === 'id' ? 'Alokasi Modal' : 'Capital' },
+                            { value: 'gain_loss', label: language === 'id' ? 'Untung/Rugi' : 'Profit & Loss' },
+                            { value: 'liquidation', label: language === 'id' ? 'Likuidasi' : 'Liquidation' }
                           ] as const).map((opt) => {
                             const isActive = historyFilter === opt.value
                             return (
@@ -1750,10 +1750,10 @@ export default function Home() {
                     }[log.type]
 
                     const typeLabel = {
-                      capital_change: language === 'id' ? "Modal" : "Capital",
-                      profit: language === 'id' ? "Untung" : "Profit",
-                      loss: language === 'id' ? "Rugi" : "Loss",
-                      liquidation: language === 'id' ? "Likuidasi" : "Liquidation"
+                      capital_change: language === 'id' ? 'Modal' : 'Capital',
+                      profit: language === 'id' ? 'Untung' : 'Profit',
+                      loss: language === 'id' ? 'Rugi' : 'Loss',
+                      liquidation: language === 'id' ? 'Likuidasi' : 'Liquidation'
                     }[log.type]
 
                     return (
@@ -1783,7 +1783,7 @@ export default function Home() {
                   <div className="py-8 text-center flex flex-col items-center justify-center gap-2 border border-dashed border-border rounded-xl">
                     <History className="w-8 h-8 text-muted-foreground/30 animate-pulse" />
                     <span className="text-xs text-muted-foreground font-semibold">
-                      {language === 'id' ? "Belum ada log penyesuaian." : "No adjustment logs yet."}
+                      {language === 'id' ? 'Belum ada log penyesuaian.' : 'No adjustment logs yet.'}
                     </span>
                   </div>
                 )}
@@ -1797,7 +1797,7 @@ export default function Home() {
                   }}
                   className="bg-primary text-primary-foreground hover:bg-primary/95 cursor-pointer shadow-md text-xs font-semibold rounded-lg px-5 py-2"
                 >
-                  {language === 'id' ? "Selesai" : "Close"}
+                  {language === 'id' ? 'Selesai' : 'Close'}
                 </Button>
               </div>
             </div>

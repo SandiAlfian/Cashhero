@@ -225,19 +225,19 @@ export default function CalendarPage() {
   // Inline Category suggestions logic
   const categoryPlaceholder = React.useMemo(() => {
     if (activeTab === 'in') {
-      return language === 'id' ? "Gaji, Bonus, Dividen, dll" : "Salary, Bonus, Dividend, etc."
+      return language === 'id' ? 'Gaji, Bonus, Dividen, dll' : 'Salary, Bonus, Dividend, etc.'
     }
-    return language === 'id' ? "Makanan, Transport, Belanja, dll" : "Food, Transport, Shopping, etc."
+    return language === 'id' ? 'Makanan, Transport, Belanja, dll' : 'Food, Transport, Shopping, etc.'
   }, [activeTab, language])
 
   const notePlaceholder = React.useMemo(() => {
     if (activeTab === 'in') {
-      return language === 'id' ? "Gaji bulanan, bonus proyek, dll" : "Monthly salary, project bonus, etc."
+      return language === 'id' ? 'Gaji bulanan, bonus proyek, dll' : 'Monthly salary, project bonus, etc.'
     }
     if (activeTab === 'saving') {
-      return language === 'id' ? "Tabungan bulanan, dana darurat, dll" : "Monthly savings, emergency fund, etc."
+      return language === 'id' ? 'Tabungan bulanan, dana darurat, dll' : 'Monthly savings, emergency fund, etc.'
     }
-    return language === 'id' ? "Makan siang, bensin, token listrik, dll" : "Lunch, gasoline, electricity token, etc."
+    return language === 'id' ? 'Makan siang, bensin, token listrik, dll' : 'Lunch, gasoline, electricity token, etc.'
   }, [activeTab, language])
 
   const filteredCategories = React.useMemo(() => {
@@ -375,7 +375,7 @@ export default function CalendarPage() {
             onClick={jumpToToday}
             className="h-8 px-3 rounded-lg border-border hover:bg-muted/40 text-xs font-semibold"
           >
-            {language === 'id' ? "Hari Ini" : "Today"}
+            {language === 'id' ? 'Hari Ini' : 'Today'}
           </Button>
         </div>
       </div>
@@ -421,7 +421,7 @@ export default function CalendarPage() {
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex flex-col">
               <span className="text-[11px] uppercase font-bold tracking-wider text-muted-foreground">
-                {language === 'id' ? "Saldo Bersih" : "Net Balance"}
+                {language === 'id' ? 'Saldo Bersih' : 'Net Balance'}
               </span>
               <span className={`text-lg font-black tracking-tight mt-1 ${mtdStats.net >= 0 ? "text-emerald-500" : "text-primary"}`}>
                 {mtdStats.net < 0 ? "-" : ""}{formatCurrency(Math.abs(mtdStats.net), language)}
@@ -440,7 +440,7 @@ export default function CalendarPage() {
             <div className="flex flex-col">
               <span className="text-[11px] uppercase font-bold tracking-wider text-muted-foreground">{t('activeDays')}</span>
               <span className="text-lg font-black text-amber-500 tracking-tight mt-1">
-                {mtdStats.activeDays} {language === 'id' ? "Hari" : "Days"}
+                {mtdStats.activeDays} {language === 'id' ? 'Hari' : 'Days'}
               </span>
             </div>
             <div className="p-3 bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/20 dark:border-amber-900/30 text-amber-500 dark:text-amber-400 rounded-xl">
@@ -577,7 +577,7 @@ export default function CalendarPage() {
                 {formatDate(selectedDate.toISOString(), language).split(" pukul")[0]}
               </CardTitle>
               <CardDescription className="text-xs">
-                {language === 'id' ? "Daftar transaksi tercatat di tanggal terpilih." : "List of transactions on the selected date."}
+                {language === 'id' ? 'Daftar transaksi tercatat di tanggal terpilih.' : 'List of transactions on the selected date.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-4">
@@ -664,7 +664,7 @@ export default function CalendarPage() {
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {language === 'id' ? "Keluar" : "Expense"}
+                    {language === 'id' ? 'Keluar' : 'Expense'}
                   </button>
                   <button
                     type="button"
@@ -678,7 +678,7 @@ export default function CalendarPage() {
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {language === 'id' ? "Masuk" : "Income"}
+                    {language === 'id' ? 'Masuk' : 'Income'}
                   </button>
                   <button
                     type="button"
@@ -692,7 +692,7 @@ export default function CalendarPage() {
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {language === 'id' ? "Tabungan" : "Savings"}
+                    {language === 'id' ? 'Tabungan' : 'Savings'}
                   </button>
                 </div>
 
@@ -763,7 +763,7 @@ export default function CalendarPage() {
                       <div className="relative">
                         <Input
                           id="calendarGoalSearchInput"
-                          placeholder={language === 'id' ? "Cari target tabungan..." : "Search saving goal..."}
+                          placeholder={language === 'id' ? 'Cari target tabungan...' : 'Search saving goal...'}
                           value={goalSearchQuery}
                           onChange={(e) => {
                             setGoalSearchQuery(e.target.value)
@@ -807,7 +807,7 @@ export default function CalendarPage() {
 
                         {showGoalDropdown && filteredGoals.length === 0 && (
                           <div className="absolute left-0 right-0 top-full mt-1 bg-card/95 border border-border p-3 text-center text-xs text-muted-foreground rounded-lg z-35 select-none">
-                            {language === 'id' ? "Tidak ada target tabungan yang cocok" : "No matching saving goals"}
+                            {language === 'id' ? 'Tidak ada target tabungan yang cocok' : 'No matching saving goals'}
                           </div>
                         )}
                       </div>

@@ -180,12 +180,12 @@ export function SecurityLockScreen() {
               </h2>
               <p className="text-xs text-muted-foreground mt-1.5 leading-normal h-8">
                 {hasSetupSecurity
-                  ? (language === 'id' 
-                      ? "Masukkan 6 digit PIN keamanan atau gunakan sidik jari untuk masuk." 
-                      : "Enter your 6-digit security PIN or scan fingerprint to access.")
-                  : (setupStep === "enter"
-                      ? (language === 'id' ? "Buat 6 digit PIN untuk mengamankan data Anda." : "Create a 6-digit PIN to secure your data.")
-                      : (language === 'id' ? "Konfirmasi ulang 6 digit PIN Anda." : "Please confirm your 6-digit PIN."))}
+                  ? (language === 'id'
+                      ? 'Masukkan 6 digit PIN keamanan atau gunakan sidik jari untuk masuk.'
+                      : 'Enter your 6-digit security PIN or scan fingerprint to access.')
+                  : (setupStep === 'enter'
+                      ? (language === 'id' ? 'Buat 6 digit PIN untuk mengamankan data Anda.' : 'Create a 6-digit PIN to secure your data.')
+                      : (language === 'id' ? 'Konfirmasi ulang 6 digit PIN Anda.' : 'Please confirm your 6-digit PIN.'))}
               </p>
             </div>
 

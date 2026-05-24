@@ -465,7 +465,7 @@ export default function PlanningPage() {
                 className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-lg transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>{language === 'id' ? "Tambah" : "Add"}</span>
+                <span>{language === 'id' ? 'Tambah' : 'Add'}</span>
               </button>
             </CardHeader>
             <CardContent className="space-y-5 pt-5 flex-1 min-h-[300px] flex flex-col justify-start">
@@ -532,7 +532,7 @@ export default function PlanningPage() {
                     <Target className="w-8 h-8 text-primary" />
                   </div>
                   <h3 className="text-sm font-bold text-foreground mb-1">
-                    {language === 'id' ? "Belum Ada Batas Anggaran" : "No Budget Limits Yet"}
+                    {language === 'id' ? 'Belum Ada Batas Anggaran' : 'No Budget Limits Yet'}
                   </h3>
                   <p className="text-xs text-muted-foreground max-w-[240px] leading-normal mb-5">
                     {t('emptyBudgets')}
@@ -571,7 +571,7 @@ export default function PlanningPage() {
                 className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-lg transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>{language === 'id' ? "Tambah" : "Add"}</span>
+                <span>{language === 'id' ? 'Tambah' : 'Add'}</span>
               </button>
             </CardHeader>
             <CardContent className="pt-5 flex-1 min-h-[300px] flex flex-col justify-start">
@@ -654,7 +654,7 @@ export default function PlanningPage() {
                     <PiggyBank className="w-8 h-8 text-green-600 dark:text-green-400" />
                   </div>
                   <h3 className="text-sm font-bold text-foreground mb-1">
-                    {language === 'id' ? "Belum Ada Target Tabungan" : "No Saving Goals Yet"}
+                    {language === 'id' ? 'Belum Ada Target Tabungan' : 'No Saving Goals Yet'}
                   </h3>
                   <p className="text-xs text-muted-foreground max-w-[240px] leading-normal mb-5">
                     {t('emptyGoals')}
@@ -754,7 +754,7 @@ export default function PlanningPage() {
                       </div>
                       {rule.note && (
                         <div className="text-[9px] italic text-muted-foreground/80 leading-tight">
-                          "{rule.note}"
+                          &apos;{rule.note}&apos;
                         </div>
                       )}
                     </div>
@@ -817,7 +817,7 @@ export default function PlanningPage() {
               <label className="font-semibold text-xs text-muted-foreground">{t('budgetCategory')}</label>
               <div className="relative">
                 <Input 
-                  placeholder={language === 'id' ? "Contoh: Makanan, Belanja, Hiburan" : "e.g. Food, Shopping, Entertainment"}
+                  placeholder={language === 'id' ? 'Contoh: Makanan, Belanja, Hiburan' : 'e.g. Food, Shopping, Entertainment'}
                   value={budgetCategoryInput}
                   onChange={(e) => {
                     setBudgetCategoryInput(e.target.value)
@@ -935,7 +935,7 @@ export default function PlanningPage() {
             <div className="grid gap-1.5">
               <label className="font-semibold text-xs text-muted-foreground">{t('goalTitle')}</label>
               <Input 
-                placeholder={language === 'id' ? "Contoh: Dana Darurat, Liburan Jepang, Laptop Baru" : "e.g. Emergency Fund, Japan Trip"}
+                placeholder={language === 'id' ? 'Contoh: Dana Darurat, Liburan Jepang, Laptop Baru' : 'e.g. Emergency Fund, Japan Trip'}
                 value={goalTitleInput}
                 onChange={(e) => setGoalTitleInput(e.target.value)}
                 className="bg-muted/40 border border-input text-foreground focus-visible:ring-primary h-10 rounded-lg text-sm font-medium"
@@ -1202,7 +1202,7 @@ export default function PlanningPage() {
               <label className="font-semibold text-xs text-muted-foreground">{t('ruleCategory')}</label>
               <div className="relative">
                 <Input 
-                  placeholder={language === 'id' ? "Contoh: Gaji, Internet, Investasi" : "e.g. Salary, Internet, Investment"}
+                  placeholder={language === 'id' ? 'Contoh: Gaji, Internet, Investasi' : 'e.g. Salary, Internet, Investment'}
                   value={ruleCategoryInput}
                   onChange={(e) => {
                     setRuleCategoryInput(e.target.value)
@@ -1252,7 +1252,7 @@ export default function PlanningPage() {
             <div className="grid gap-1.5">
               <label className="font-semibold text-xs text-muted-foreground">{t('ruleNote')}</label>
               <Input 
-                placeholder={language === 'id' ? "Catatan tambahan (opsional)" : "Additional notes (optional)"}
+                placeholder={language === 'id' ? 'Catatan tambahan (opsional)' : 'Additional notes (optional)'}
                 value={ruleNoteInput}
                 onChange={(e) => setRuleNoteInput(e.target.value)}
                 className="bg-muted/40 border border-input text-foreground focus-visible:ring-primary h-10 rounded-lg text-sm font-medium"
