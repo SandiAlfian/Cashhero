@@ -4,13 +4,13 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
-import { 
-  LayoutDashboard, 
-  PiggyBank, 
-  TrendingUp, 
-  Calendar, 
-  History, 
-  Settings 
+import {
+  LayoutDashboard,
+  PiggyBank,
+  TrendingUp,
+  Calendar,
+  History,
+  Settings
 } from "lucide-react"
 import { useLanguageStore, translations } from "@/store/useLanguageStore"
 import { LanguageToggle } from "./LanguageToggle"
@@ -30,8 +30,8 @@ export function MobileHeader() {
       <div className="flex items-center gap-2 shrink-0">
         <LanguageToggle />
         <ThemeToggle />
-        <Link 
-          href="/settings" 
+        <Link
+          href="/settings"
           className="p-2 hover:bg-primary/10 dark:hover:bg-rose-950/20 rounded-lg transition-all duration-300 relative overflow-hidden"
         >
           <motion.div
@@ -109,12 +109,12 @@ export function MobileBottomBar() {
     },
     {
       href: "/planning",
-      label: t('planning'),
+      label: language === 'id' ? 'Rencana' : 'Planning',
       icon: PiggyBank,
     },
     {
       href: "/calendar",
-      label: t('calendar'),
+      label: language === 'id' ? 'Kalender' : 'Calendar',
       icon: Calendar,
     },
     {
@@ -132,7 +132,7 @@ export function MobileBottomBar() {
   if (!mounted) return null
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-background/80 backdrop-blur-lg border-t border-border/80 px-2 py-2.5 pb-safe flex items-center justify-around no-print shadow-[0_-4px_16px_rgba(0,0,0,0.05)] transition-all duration-300">
+    <div className="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-background/80 backdrop-blur-lg border-t border-border/80 px-2 py-2.5 pb-safe grid grid-cols-5 justify-items-center items-center no-print shadow-[0_-4px_16px_rgba(0,0,0,0.05)] transition-all duration-300">
       {items.map((item) => {
         const isActive = pathname === item.href
         const Icon = item.icon
@@ -141,7 +141,7 @@ export function MobileBottomBar() {
           <Link
             key={item.href}
             href={item.href}
-            className="flex flex-col items-center justify-center gap-1 relative py-1 px-3.5 rounded-xl transition-all duration-200"
+            className="flex flex-col items-center justify-center gap-1 relative py-1 w-full max-w-[72px] rounded-xl transition-all duration-200"
           >
             {isActive && (
               <motion.span
@@ -150,19 +150,17 @@ export function MobileBottomBar() {
                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
               />
             )}
-            <Icon 
-              className={`w-5.5 h-5.5 relative z-10 transition-all duration-300 ${
-                isActive 
-                  ? "text-primary scale-110" 
+            <Icon
+              className={`w-5.5 h-5.5 relative z-10 transition-all duration-300 ${isActive
+                  ? "text-primary scale-110"
                   : "text-muted-foreground/80 hover:text-foreground"
-              }`} 
+                }`}
             />
-            <span 
-              className={`text-[8px] font-bold tracking-wider relative z-10 uppercase transition-colors duration-300 ${
-                isActive 
-                  ? "text-primary font-extrabold" 
+            <span
+              className={`text-[8px] font-bold tracking-wider relative z-10 uppercase transition-colors duration-300 ${isActive
+                  ? "text-primary font-extrabold"
                   : "text-muted-foreground/80"
-              }`}
+                }`}
             >
               {item.label}
             </span>
