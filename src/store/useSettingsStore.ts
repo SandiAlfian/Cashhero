@@ -16,6 +16,7 @@ export interface SettingsState {
   hasSetupSecurity: boolean
   biometricCredentialId?: string
   isBiometricsSimulated?: boolean
+  isNotificationEnabled: boolean
   exchangeRates: Record<MainCurrency, number>
   lastRatesUpdate: string
   ratesSource: 'api' | 'offline'
@@ -30,6 +31,7 @@ export interface SettingsState {
   setIsBiometricsSimulated: (simulated: boolean) => void
   toggleSidebar: () => void
   setHasSetupSecurity: (setup: boolean) => void
+  setNotificationEnabled: (enabled: boolean) => void
   fetchExchangeRates: () => Promise<void>
   resetAllData: () => void
 }
@@ -58,6 +60,7 @@ export const useSettingsStore = create<SettingsState>()(
       hasSetupSecurity: false,
       biometricCredentialId: '',
       isBiometricsSimulated: false,
+      isNotificationEnabled: false,
       exchangeRates: {
         IDR: 1,
         USD: 17825,
@@ -78,6 +81,7 @@ export const useSettingsStore = create<SettingsState>()(
       setIsBiometricsSimulated: (isBiometricsSimulated) => set({ isBiometricsSimulated }),
       toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
       setHasSetupSecurity: (hasSetupSecurity) => set({ hasSetupSecurity }),
+      setNotificationEnabled: (isNotificationEnabled) => set({ isNotificationEnabled }),
       fetchExchangeRates: async () => {
         try {
           const res = await fetch('https://open.er-api.com/v6/latest/IDR')

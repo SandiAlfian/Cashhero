@@ -4,7 +4,7 @@
 const CACHE_NAME = 'cashhero-v1'
 
 // ── Install ────────────────────────────────────────────────────────────────────
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting()
 })
 
@@ -56,7 +56,36 @@ self.addEventListener('sync', (event) => {
   }
 })
 
-// ── Push Notification (siap untuk fitur masa depan) ───────────────────────────
+// ── Periodic Background Sync (Pengecekan Notifikasi Lokal) ────────────────────
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'cashhero-smart-reminder') {
+    event.waitUntil(
+      (async () => {
+        // Tembakkan notifikasi peringatan pintar jika diizinkan
+        self.registration.showNotification('Cashhero - Pengingat Pintar', {
+          body: 'Buka aplikasi untuk melihat transaksi rutin dan pembaruan portofolio Anda hari ini.',
+          icon: '/cashhero-logo-192.png',
+          badge: '/cashhero-logo-192.png',
+          tag: 'cashhero-daily-reminder',
+        })
+      })()
+    )
+  }
+})
+
+// ── Menerima Pesan dari Client (Aplikasi Web) ──────────────────────────────────
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SHOW_LOCAL_NOTIFICATION') {
+    const { title, options } = event.data.payload
+    self.registration.showNotification(title, {
+      ...options,
+      icon: '/cashhero-logo-192.png',
+      badge: '/cashhero-logo-192.png'
+    })
+  }
+})
+
+// ── Push Notification (jika menggunakan server backend FCM/WebPush) ───────────
 self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? {}
   const title = data.title || 'Cashhero'
@@ -65,8 +94,8 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: '/cashhero-logo.png',
-      badge: '/cashhero-logo.png',
+      icon: '/cashhero-logo-192.png',
+      badge: '/cashhero-logo-192.png',
       tag: 'cashhero-notification',
     })
   )

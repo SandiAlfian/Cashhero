@@ -36,10 +36,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 1.04 }}
             transition={{ duration: 0.48, ease: "easeInOut" }}
-            className="fixed inset-0 z-[99999] flex flex-col items-center justify-center select-none no-print overflow-hidden"
-            style={{
-              background: "radial-gradient(ellipse at center, #27141E 0%, #0E0B10 100%)"
-            }}
+            className="fixed inset-0 z-[99999] flex flex-col items-center justify-center select-none no-print overflow-hidden bg-black"
           >
             {/* Deep ambient maroon backdrop glow */}
             <motion.div

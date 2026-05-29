@@ -172,15 +172,20 @@ export function SecurityLockScreen() {
     }
   }, [isBiometricsSimulated, biometricCredentialId])
 
+  const hasPromptedSetup = React.useRef(false)
+
   React.useEffect(() => {
     setMounted(true)
     
     // Always trigger setup confirm on initial load if security is not set up
-    if (!hasSetupSecurity) {
+    if (!hasSetupSecurity && !hasPromptedSetup.current) {
+      hasPromptedSetup.current = true
       setShowSetupConfirm(true)
       setForceShowSetup(true)
     }
+  }, [hasSetupSecurity])
 
+  React.useEffect(() => {
     if (securityPIN && hasSetupSecurity && biometricsRegistered) {
       // Trigger biometrics scan instantly on load for banking experience
       const timer = setTimeout(() => {

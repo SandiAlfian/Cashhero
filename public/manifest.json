@@ -4,7 +4,7 @@
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1C1B20",
+  "background_color": "#000000",
   "theme_color": "#810B38",
   "description": "Pahlawan Kelola Keuangan Pribadi",
   "icons": [

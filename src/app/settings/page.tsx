@@ -27,7 +27,8 @@ import {
   Info,
   TrendingUp,
   Globe,
-  ChevronDown
+  ChevronDown,
+  Bell
 } from "lucide-react"
 import { useLanguageStore, translations } from "@/store/useLanguageStore"
 import { useSettingsStore, MainCurrency } from "@/store/useSettingsStore"
@@ -176,6 +177,8 @@ export default function SettingsPage() {
   const setBiometricsRegistered = useSettingsStore((state) => state.setBiometricsRegistered)
   const setBiometricCredentialId = useSettingsStore((state) => state.setBiometricCredentialId)
   const setIsBiometricsSimulated = useSettingsStore((state) => state.setIsBiometricsSimulated)
+  const isNotificationEnabled = useSettingsStore((state) => state.isNotificationEnabled)
+  const setNotificationEnabled = useSettingsStore((state) => state.setNotificationEnabled)
   const resetAllData = useSettingsStore((state) => state.resetAllData)
 
   const [mounted, setMounted] = React.useState(false)
@@ -1171,6 +1174,50 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
+                {/* Smart Notification Reminder Card */}
+                <div className="col-span-1 sm:col-span-2 flex items-center justify-between p-3 rounded-xl border border-border/20 bg-muted/10">
+                  <div className="space-y-0.5 pr-2">
+                    <h5 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Bell className="w-3.5 h-3.5 text-blue-500" />
+                      {language === 'id' ? 'Pengingat Pintar (Notifikasi)' : 'Smart Reminders (Push)'}
+                    </h5>
+                    <p className="text-[10px] text-muted-foreground leading-normal max-w-[85%]">
+                      {language === 'id' 
+                        ? 'Dapatkan pengingat untuk transaksi berulang dan perbarui portofolio Anda via notifikasi push lokal.' 
+                        : 'Get reminders for recurring transactions and portfolio updates via local push notifications.'}
+                    </p>
+                  </div>
+                  <div
+                    onClick={async () => {
+                      const currentState = useSettingsStore.getState().isNotificationEnabled
+                      if (!currentState) {
+                        if (typeof window !== 'undefined' && 'Notification' in window) {
+                          const permission = await Notification.requestPermission()
+                          if (permission === 'granted') {
+                            setNotificationEnabled(true)
+                            triggerToast(language === 'id' ? 'Notifikasi pengingat pintar diaktifkan!' : 'Smart reminders enabled!')
+                          } else {
+                            triggerToast(language === 'id' ? 'Izin notifikasi ditolak oleh peramban.' : 'Notification permission denied by browser.')
+                          }
+                        } else {
+                          triggerToast(language === 'id' ? 'Peramban Anda tidak mendukung notifikasi push.' : 'Your browser does not support push notifications.')
+                        }
+                      } else {
+                        setNotificationEnabled(false)
+                      }
+                    }}
+                    className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors duration-200 flex items-center shrink-0 ${isNotificationEnabled ? "bg-blue-500" : "bg-muted-foreground/30"
+                      }`}
+                  >
+                    <motion.div
+                      layout
+                      className="w-4 h-4 bg-white rounded-full shadow-md"
+                      animate={{ x: isNotificationEnabled ? 16 : 0 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    />
+                  </div>
+                </div>
+
                 {/* PWA Manual Installer Card */}
                 <div
                   onClick={isAlreadyInstalled ? undefined : handleInstallPWA}
@@ -1254,21 +1301,50 @@ export default function SettingsPage() {
         </motion.div>
       </div>
 
-      {/* Dynamic Information Banner */}
+      {/* Dynamic Information Banner & App Version */}
       <motion.div
         variants={itemVariants}
-        className="p-4 bg-muted/15 border border-border/30 rounded-xl flex items-start gap-3 text-xs text-muted-foreground shadow-sm font-semibold max-w-xl"
+        className="grid gap-4 md:grid-cols-2 max-w-full"
       >
-        <Info className="w-5 h-5 text-primary shrink-0 mt-0.5 animate-pulse" />
-        <div className="flex flex-col gap-0.5">
-          <p className="font-extrabold uppercase text-[10px] tracking-wider text-foreground">
-            {language === 'id' ? 'INFORMASI APLIKASI' : 'APPLICATION INFO'}
-          </p>
-          <p className="text-[11px] leading-relaxed">
-            {language === 'id'
-              ? "Seluruh data Anda disimpan secara mandiri dan aman di penyimpanan lokal peramban Anda (local storage). Kami tidak mengunggah data keuangan Anda ke server mana pun guna menjaga privasi mutlak."
-              : "All your data is saved independently and securely in your local browser storage (local storage). We do not upload your financial data to any server to ensure absolute privacy."}
-          </p>
+        {/* Privacy Information */}
+        <div className="p-4 bg-muted/15 border border-border/30 rounded-xl flex items-start gap-3 text-xs text-muted-foreground shadow-sm font-semibold">
+          <Info className="w-5 h-5 text-primary shrink-0 mt-0.5 animate-pulse" />
+          <div className="flex flex-col gap-0.5">
+            <p className="font-extrabold uppercase text-[10px] tracking-wider text-foreground">
+              {language === 'id' ? 'INFORMASI PRIVASI' : 'PRIVACY INFO'}
+            </p>
+            <p className="text-[11px] leading-relaxed">
+              {language === 'id'
+                ? "Seluruh data Anda disimpan secara mandiri dan aman di penyimpanan lokal peramban Anda (local storage). Kami tidak mengunggah data keuangan Anda ke server mana pun guna menjaga privasi mutlak."
+                : "All your data is saved independently and securely in your local browser storage (local storage). We do not upload your financial data to any server to ensure absolute privacy."}
+            </p>
+          </div>
+        </div>
+
+        {/* App Version Info */}
+        <div className="p-4 bg-muted/15 border border-border/30 rounded-xl flex items-start gap-3 text-xs text-muted-foreground shadow-sm font-semibold">
+          <div className="w-5 h-5 flex items-center justify-center shrink-0 mt-0.5">
+            <div className="w-4 h-4 rounded-full bg-primary animate-pulse" />
+          </div>
+          <div className="flex flex-col gap-1.5 w-full">
+            <p className="font-extrabold uppercase text-[10px] tracking-wider text-foreground">
+              {language === 'id' ? 'TENTANG APLIKASI' : 'ABOUT APP'}
+            </p>
+            <div className="flex flex-col gap-1 text-[11px] leading-none">
+              <div className="flex justify-between border-b border-border/10 pb-1.5">
+                <span>{language === 'id' ? 'Versi' : 'Version'}</span>
+                <span className="font-bold text-foreground">1.0.0</span>
+              </div>
+              <div className="flex justify-between border-b border-border/10 pb-1.5 mt-0.5">
+                <span>{language === 'id' ? 'Pengembang' : 'Developer'}</span>
+                <span className="font-bold text-foreground">Sandyal</span>
+              </div>
+              <div className="flex justify-between mt-0.5">
+                <span>Hak Cipta / Copyright</span>
+                <span className="font-bold text-foreground">© CashHero</span>
+              </div>
+            </div>
+          </div>
         </div>
       </motion.div>
 
