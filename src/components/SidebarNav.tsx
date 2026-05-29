@@ -103,33 +103,6 @@ export function SidebarNav({ isCollapsed = false }: { isCollapsed?: boolean }) {
         })}
       </nav>
 
-      <div className="mt-auto pt-6 border-t border-sidebar-border">
-        <Link
-          href="/settings"
-          title={isCollapsed ? t('settings') : undefined}
-          className={`flex items-center relative transition-all duration-300 font-medium ${
-            isCollapsed 
-              ? "w-12 h-12 justify-center mx-auto rounded-xl" 
-              : "py-3 px-4 gap-3 w-full"
-          } ${
-            isSettingsActive
-              ? "text-primary-foreground scale-[1.02]"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-          }`}
-        >
-          {isSettingsActive && (
-            <motion.span
-              layoutId="activeSidebarIndicator"
-              className={`absolute inset-0 bg-primary z-0 shadow-[0_4px_12px_rgba(129,11,56,0.3)] dark:shadow-[0_4px_16px_rgba(157,21,72,0.4)] ${
-                isCollapsed ? "rounded-xl" : "rounded-lg"
-              }`}
-              transition={{ type: "spring", stiffness: 350, damping: 28 }}
-            />
-          )}
-          <Settings className={`w-5 h-5 relative z-10 transition-colors duration-300 ${isSettingsActive ? "text-primary-foreground" : "text-muted-foreground"}`} />
-          {!isCollapsed && <span className="relative z-10 text-sm tracking-wide">{t('settings')}</span>}
-        </Link>
-      </div>
     </div>
   )
 }

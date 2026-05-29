@@ -100,6 +100,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                   style={{
                     filter: "drop-shadow(0 14px 36px rgba(129,11,56,0.48))"
                   }}
+                  unoptimized
                   priority
                 />
               </motion.div>
@@ -113,7 +114,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                   style={{ fontFamily: "'Adumu', sans-serif", lineHeight: 1 }}
                   className="text-[3rem] tracking-wide select-none"
                 >
-                  <span style={{ color: "#F3EBE1" }}>Cash</span>
+                  <span style={{ color: "#f8b131" }}>Cash</span>
                   <span style={{ color: "#810B38" }}>Hero</span>
                 </motion.h1>
 
@@ -124,7 +125,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                   transition={{ duration: 0.85, ease: "easeOut", delay: 1.05 }}
                   style={{
                     fontFamily: "'Adumu', sans-serif",
-                    color: "#D5C5B5",
+                    color: "#f8b131",
                     letterSpacing: "0.18em"
                   }}
                   className="text-[11px] uppercase text-center whitespace-nowrap mt-1"

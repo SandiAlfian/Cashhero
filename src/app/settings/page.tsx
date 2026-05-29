@@ -2,16 +2,16 @@
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { 
-  User, 
-  Shield, 
-  Coins, 
-  Sliders, 
-  Languages, 
-  Moon, 
+import {
+  User,
+  Shield,
+  Coins,
+  Sliders,
+  Languages,
+  Moon,
   Sun,
   Laptop,
-  Database, 
+  Database,
   Check,
   AlertCircle,
   Fingerprint,
@@ -138,6 +138,18 @@ const localT = {
   }
 }
 
+// Helper to convert ArrayBuffer to Base64 string
+const bufferToBase64 = (buf: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buf)
+  let binary = ""
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return window.btoa(binary)
+}
+
+
+
 export default function SettingsPage() {
   const { language, setLanguage } = useLanguageStore()
   const { theme, setTheme } = useTheme()
@@ -162,6 +174,8 @@ export default function SettingsPage() {
   const setSecurityPIN = useSettingsStore((state) => state.setSecurityPIN)
   const setPinCode = useSettingsStore((state) => state.setPinCode)
   const setBiometricsRegistered = useSettingsStore((state) => state.setBiometricsRegistered)
+  const setBiometricCredentialId = useSettingsStore((state) => state.setBiometricCredentialId)
+  const setIsBiometricsSimulated = useSettingsStore((state) => state.setIsBiometricsSimulated)
   const resetAllData = useSettingsStore((state) => state.resetAllData)
 
   const [mounted, setMounted] = React.useState(false)
@@ -209,15 +223,47 @@ export default function SettingsPage() {
   }
 
   const [pwaPrompt, setPwaPrompt] = React.useState<BeforeInstallPromptEvent | null>(null)
+  const [isAlreadyInstalled, setIsAlreadyInstalled] = React.useState(false)
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return
+
+    // 1. Check if already installed or in standalone mode
+    const checkIsInstalled = () => {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || ('standalone' in window.navigator && (window.navigator as Navigator & { standalone?: boolean }).standalone === true)
+
+      const wasInstalled = localStorage.getItem("cashhero-pwa-installed") === "true"
+      setIsAlreadyInstalled(isStandalone || wasInstalled)
+    }
+
+    checkIsInstalled()
+
+    // 2. Load globally deferred prompt if available
+    const globalWindow = window as unknown as Window & { deferredPwaPrompt?: BeforeInstallPromptEvent }
+    if (globalWindow.deferredPwaPrompt) {
+      setPwaPrompt(globalWindow.deferredPwaPrompt)
+    }
+
     const handleBeforePrompt = (e: Event) => {
       e.preventDefault()
       setPwaPrompt(e as BeforeInstallPromptEvent)
+      const gw = window as unknown as Window & { deferredPwaPrompt?: BeforeInstallPromptEvent }
+      gw.deferredPwaPrompt = e as BeforeInstallPromptEvent
     }
+
+    const handleAppInstalled = () => {
+      localStorage.setItem("cashhero-pwa-installed", "true")
+      setIsAlreadyInstalled(true)
+    }
+
     window.addEventListener('beforeinstallprompt', handleBeforePrompt)
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforePrompt)
+    window.addEventListener('appinstalled', handleAppInstalled)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforePrompt)
+      window.removeEventListener('appinstalled', handleAppInstalled)
+    }
   }, [])
 
   const handleInstallPWA = async () => {
@@ -232,7 +278,17 @@ export default function SettingsPage() {
       return
     }
 
-    if (!pwaPrompt) {
+    let globalPrompt: BeforeInstallPromptEvent | null = null
+    if (typeof window !== 'undefined') {
+      const gw = window as unknown as Window & { deferredPwaPrompt?: BeforeInstallPromptEvent | null }
+      if (gw.deferredPwaPrompt) {
+        globalPrompt = gw.deferredPwaPrompt
+      }
+    }
+
+    const activePrompt = pwaPrompt || globalPrompt
+
+    if (!activePrompt) {
       alert(
         language === 'id'
           ? "Aplikasi sudah terpasang atau browser Anda tidak mendukung instalasi otomatis secara langsung. Silakan cari menu 'Instal' di pojok kanan atas browser Anda."
@@ -241,10 +297,16 @@ export default function SettingsPage() {
       return
     }
 
-    pwaPrompt.prompt()
-    const { outcome } = await pwaPrompt.userChoice
+    activePrompt.prompt()
+    const { outcome } = await activePrompt.userChoice
     if (outcome === 'accepted') {
       setPwaPrompt(null)
+      if (typeof window !== 'undefined') {
+        const gw = window as unknown as Window & { deferredPwaPrompt?: BeforeInstallPromptEvent | null }
+        gw.deferredPwaPrompt = null
+      }
+      localStorage.setItem("cashhero-pwa-installed", "true")
+      setIsAlreadyInstalled(true)
     }
   }
 
@@ -392,8 +454,12 @@ export default function SettingsPage() {
   const handleRegisterBiometrics = async () => {
     if (typeof window === "undefined") return
 
-    // Attempt real WebAuthn Platform authenticator creation
-    if (window.PublicKeyCredential) {
+    const isSecureOrigin = window.location.protocol === 'https:' ||
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1'
+
+    // Attempt real WebAuthn Platform authenticator creation on secure origins
+    if (window.PublicKeyCredential && isSecureOrigin) {
       try {
         const challenge = new Uint8Array(32)
         window.crypto.getRandomValues(challenge)
@@ -420,22 +486,31 @@ export default function SettingsPage() {
             }
           }
         }
-        
-        const credential = await navigator.credentials.create(options)
+
+        const credential = await navigator.credentials.create(options) as PublicKeyCredential | null
         if (credential) {
+          const credIdBase64 = bufferToBase64(credential.rawId)
           setBiometricsRegistered(true)
+          setIsBiometricsSimulated(false)
+          setBiometricCredentialId(credIdBase64)
           triggerToast(lt("biometricRegisterSuccess"))
           return
         }
-      } catch (err) {
-        console.warn("WebAuthn failed/cancelled:", err)
+      } catch {
+        // WebAuthn platform authenticator failed, falling back to simulated mode
       }
     }
 
     // Fallback simulation/prompt for local or sandbox environment
     // Allow users to force-toggle or confirm so it still works seamlessly
     setBiometricsRegistered(true)
-    triggerToast(lt("biometricRegisterSuccess"))
+    setIsBiometricsSimulated(true)
+    setBiometricCredentialId("")
+    triggerToast(
+      language === 'id'
+        ? "Mode Simulasi Biometrik diaktifkan karena koneksi IP Lokal/Non-HTTPS!"
+        : "Biometrics Simulation Mode activated due to Local IP/Non-HTTPS connection!"
+    )
   }
 
   // Handle JSON Export (Download Backup)
@@ -485,16 +560,16 @@ export default function SettingsPage() {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string)
-        
+
         // Validation: Verify if file contains at least one of our key Cashhero data namespaces
         const validKeys = [
-          "cashhero-transactions", 
-          "cashhero-portfolio-dynamic-v2", 
-          "cashhero-planning-persistent", 
-          "cashhero-language", 
+          "cashhero-transactions",
+          "cashhero-portfolio-dynamic-v2",
+          "cashhero-planning-persistent",
+          "cashhero-language",
           "cashhero-settings"
         ]
-        
+
         const hasValidKey = validKeys.some(key => key in parsed)
         if (!hasValidKey) {
           triggerToast(lt("importError"))
@@ -556,7 +631,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <motion.div 
+    <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -610,32 +685,30 @@ export default function SettingsPage() {
                     <label className="text-[10px] font-extrabold uppercase text-muted-foreground/80 tracking-wider">
                       {lt("fullName")}
                     </label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       disabled={!isEditingProfile}
                       value={isEditingProfile ? nameInput : username}
                       onChange={(e) => setNameInput(e.target.value)}
-                      className={`bg-muted/10 border rounded-lg px-3 py-2 text-xs font-semibold w-full transition-all duration-200 ${
-                        isEditingProfile 
-                          ? "border-primary/50 text-foreground bg-muted/20 focus:ring-1 focus:ring-primary focus:border-primary outline-none" 
-                          : "border-border/30 text-muted-foreground cursor-not-allowed opacity-80"
-                      }`}
+                      className={`bg-muted/10 border rounded-lg px-3 py-2 text-xs font-semibold w-full transition-all duration-200 ${isEditingProfile
+                        ? "border-primary/50 text-foreground bg-muted/20 focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+                        : "border-border/30 text-muted-foreground cursor-not-allowed opacity-80"
+                        }`}
                     />
                   </div>
                   <div className="grid gap-1.5">
                     <label className="text-[10px] font-extrabold uppercase text-muted-foreground/80 tracking-wider">
                       {lt("email")}
                     </label>
-                    <input 
-                      type="email" 
+                    <input
+                      type="email"
                       disabled={!isEditingProfile}
                       value={isEditingProfile ? emailInput : (email || "user@cashhero.app")}
                       onChange={(e) => setEmailInput(e.target.value)}
-                      className={`bg-muted/10 border rounded-lg px-3 py-2 text-xs font-semibold w-full transition-all duration-200 ${
-                        isEditingProfile 
-                          ? "border-primary/50 text-foreground bg-muted/20 focus:ring-1 focus:ring-primary focus:border-primary outline-none" 
-                          : "border-border/30 text-muted-foreground cursor-not-allowed opacity-80"
-                      }`}
+                      className={`bg-muted/10 border rounded-lg px-3 py-2 text-xs font-semibold w-full transition-all duration-200 ${isEditingProfile
+                        ? "border-primary/50 text-foreground bg-muted/20 focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+                        : "border-border/30 text-muted-foreground cursor-not-allowed opacity-80"
+                        }`}
                     />
                   </div>
                 </div>
@@ -643,7 +716,7 @@ export default function SettingsPage() {
 
               {isEditingProfile ? (
                 <div className="grid grid-cols-2 gap-3">
-                  <button 
+                  <button
                     onClick={() => {
                       setIsEditingProfile(false)
                       setNameInput(username)
@@ -653,7 +726,7 @@ export default function SettingsPage() {
                   >
                     {t("cancel")}
                   </button>
-                  <button 
+                  <button
                     onClick={handleSaveProfile}
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2 px-3 rounded-lg font-bold text-xs transition-all duration-200 cursor-pointer text-center shadow-md flex items-center justify-center gap-1.5 select-none"
                   >
@@ -662,7 +735,7 @@ export default function SettingsPage() {
                   </button>
                 </div>
               ) : (
-                <button 
+                <button
                   onClick={() => setIsEditingProfile(true)}
                   className="w-full bg-muted/40 hover:bg-muted/65 border border-border text-foreground py-2.5 px-4 rounded-lg font-bold text-xs transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 select-none group/btn"
                 >
@@ -732,11 +805,10 @@ export default function SettingsPage() {
                                   setLocalCurrency(opt.value)
                                   setIsCurrencyDropdownOpen(false)
                                 }}
-                                className={`w-full px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all duration-150 cursor-pointer flex items-center justify-between ${
-                                  isActive
-                                    ? "bg-primary text-primary-foreground shadow-sm"
-                                    : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                                }`}
+                                className={`w-full px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all duration-150 cursor-pointer flex items-center justify-between ${isActive
+                                  ? "bg-primary text-primary-foreground shadow-sm"
+                                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                                  }`}
                               >
                                 <span>{opt.label}</span>
                                 {isActive && <Check className="w-3.5 h-3.5 shrink-0" />}
@@ -759,17 +831,16 @@ export default function SettingsPage() {
                         <TrendingUp className="w-3.5 h-3.5 text-primary animate-pulse" />
                         {language === 'id' ? 'KURS AKTIF SAAT INI' : 'CURRENT ACTIVE RATES'}
                       </div>
-                      <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full select-none ${
-                        ratesSource === 'api' 
-                          ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" 
-                          : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                      }`}>
-                        {ratesSource === 'api' 
-                          ? (language === 'id' ? 'Terupdate Real-Time (API)' : 'Live API Connected') 
+                      <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full select-none ${ratesSource === 'api'
+                        ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                        : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                        }`}>
+                        {ratesSource === 'api'
+                          ? (language === 'id' ? 'Terupdate Real-Time' : 'Live API Connected')
                           : (language === 'id' ? 'Mode Offline (Mei 2026)' : 'Offline Fallback')}
                       </span>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 font-bold text-foreground">
                       <div className="flex justify-between border-b border-border/10 pb-1">
                         <span className="text-muted-foreground">1 USD</span>
@@ -788,12 +859,12 @@ export default function SettingsPage() {
                         <span>Rp {(exchangeRates?.JPY || 112).toLocaleString('id-ID')}</span>
                       </div>
                     </div>
-                    
+
                     {lastRatesUpdate && (
                       <p className="text-[8px] text-muted-foreground/80 italic mt-1 flex items-center gap-1">
                         <Globe className="w-2.5 h-2.5 shrink-0 text-primary" />
-                        {language === 'id' 
-                          ? `Pembaruan terakhir: ${new Date(lastRatesUpdate).toLocaleString('id-ID')}` 
+                        {language === 'id'
+                          ? `Pembaruan terakhir: ${new Date(lastRatesUpdate).toLocaleString('id-ID')}`
                           : `Last updated: ${new Date(lastRatesUpdate).toLocaleString('en-US')}`}
                       </p>
                     )}
@@ -839,11 +910,10 @@ export default function SettingsPage() {
                                   setLocalFilter(opt.value)
                                   setIsFilterDropdownOpen(false)
                                 }}
-                                className={`w-full px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all duration-150 cursor-pointer flex items-center justify-between ${
-                                  isActive
-                                    ? "bg-primary text-primary-foreground shadow-sm"
-                                    : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                                }`}
+                                className={`w-full px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all duration-150 cursor-pointer flex items-center justify-between ${isActive
+                                  ? "bg-primary text-primary-foreground shadow-sm"
+                                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                                  }`}
                               >
                                 <span>{opt.label}</span>
                                 {isActive && <Check className="w-3.5 h-3.5 shrink-0" />}
@@ -866,13 +936,12 @@ export default function SettingsPage() {
                     </p>
                   </div>
                   {/* Premium Taktil Switch */}
-                  <div 
+                  <div
                     onClick={() => setLocalAutoLogging(!localAutoLogging)}
-                    className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors duration-200 flex items-center ${
-                      localAutoLogging ? "bg-primary" : "bg-muted-foreground/30"
-                    }`}
+                    className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors duration-200 flex items-center ${localAutoLogging ? "bg-primary" : "bg-muted-foreground/30"
+                      }`}
                   >
-                    <motion.div 
+                    <motion.div
                       layout
                       className="w-4 h-4 bg-white rounded-full shadow-md"
                       animate={{ x: localAutoLogging ? 16 : 0 }}
@@ -882,7 +951,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={handleSavePreferences}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/95 py-2.5 px-4 rounded-lg font-bold text-xs shadow-md transition-all duration-200 cursor-pointer text-center select-none"
               >
@@ -922,7 +991,7 @@ export default function SettingsPage() {
                       {lt("securityPinToggleDesc")}
                     </p>
                   </div>
-                  <div 
+                  <div
                     onClick={() => {
                       if (!securityPIN) {
                         // Turning on: Prompt to set/confirm PIN
@@ -932,11 +1001,10 @@ export default function SettingsPage() {
                         setSecurityPIN(false)
                       }
                     }}
-                    className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors duration-200 flex items-center shrink-0 ${
-                      securityPIN ? "bg-primary" : "bg-muted-foreground/30"
-                    }`}
+                    className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors duration-200 flex items-center shrink-0 ${securityPIN ? "bg-primary" : "bg-muted-foreground/30"
+                      }`}
                   >
-                    <motion.div 
+                    <motion.div
                       layout
                       className="w-4 h-4 bg-white rounded-full shadow-md"
                       animate={{ x: securityPIN ? 16 : 0 }}
@@ -980,7 +1048,7 @@ export default function SettingsPage() {
                       {lt("biometricToggleDesc")}
                     </p>
                   </div>
-                  <div 
+                  <div
                     onClick={() => {
                       if (!biometricsRegistered) {
                         handleRegisterBiometrics()
@@ -988,11 +1056,10 @@ export default function SettingsPage() {
                         setBiometricsRegistered(false)
                       }
                     }}
-                    className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors duration-200 flex items-center shrink-0 ${
-                      biometricsRegistered ? "bg-emerald-500" : "bg-muted-foreground/30"
-                    }`}
+                    className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors duration-200 flex items-center shrink-0 ${biometricsRegistered ? "bg-emerald-500" : "bg-muted-foreground/30"
+                      }`}
                   >
-                    <motion.div 
+                    <motion.div
                       layout
                       className="w-4 h-4 bg-white rounded-full shadow-md"
                       animate={{ x: biometricsRegistered ? 16 : 0 }}
@@ -1006,13 +1073,13 @@ export default function SettingsPage() {
               <div className="flex items-center gap-2 p-2.5 rounded-lg border border-emerald-500/10 bg-emerald-500/5 text-[10px] font-bold text-emerald-500 select-none">
                 <Shield className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 <span className="uppercase tracking-wider">
-                  {securityPIN && biometricsRegistered 
-                    ? lt("pinAndBiometric") 
-                    : securityPIN 
-                      ? "PIN KEAMANAN AKTIF" 
-                      : biometricsRegistered 
-                        ? "BIOMETRIK SAJA" 
-                        : "SISTEM TIDAK TERKUNCI (TANPA PENGAMAN)"}
+                  {securityPIN && biometricsRegistered
+                    ? lt("pinAndBiometric")
+                    : securityPIN
+                      ? (language === 'id' ? "PIN KEAMANAN AKTIF" : "SECURITY PIN ACTIVE")
+                      : biometricsRegistered
+                        ? (language === 'id' ? "BIOMETRIK SAJA" : "BIOMETRICS ONLY")
+                        : (language === 'id' ? "SISTEM TIDAK TERKUNCI (TANPA PENGAMAN)" : "SYSTEM UNLOCKED (NO SECURITY)")}
                 </span>
               </div>
             </CardContent>
@@ -1053,11 +1120,10 @@ export default function SettingsPage() {
                       <button
                         key={t}
                         onClick={() => handleThemeChange(t)}
-                        className={`text-[9px] font-bold py-1 px-1.5 rounded-md border text-center transition-all ${
-                          theme === t 
-                            ? "bg-primary text-primary-foreground border-primary" 
-                            : "bg-muted/50 text-muted-foreground border-border/40 hover:bg-muted"
-                        }`}
+                        className={`text-[9px] font-bold py-1 px-1.5 rounded-md border text-center transition-all ${theme === t
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-muted/50 text-muted-foreground border-border/40 hover:bg-muted"
+                          }`}
                       >
                         {t === 'light' ? 'Light' : t === 'dark' ? 'Dark' : 'Sistem'}
                       </button>
@@ -1066,7 +1132,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Bahasa Switch Card */}
-                <div 
+                <div
                   onClick={handleLanguageChange}
                   className="p-3.5 rounded-xl border border-border/30 bg-muted/10 hover:bg-muted/20 hover:border-primary/20 transition-all duration-200 cursor-pointer group/lang flex flex-col justify-between gap-2.5"
                 >
@@ -1090,27 +1156,41 @@ export default function SettingsPage() {
                 </div>
 
                 {/* PWA Manual Installer Card */}
-                <div 
-                  onClick={handleInstallPWA}
-                  className="col-span-1 sm:col-span-2 p-3.5 rounded-xl border border-border/30 bg-muted/10 hover:bg-muted/20 hover:border-primary/20 transition-all duration-200 cursor-pointer flex items-center justify-between gap-4"
+                <div
+                  onClick={isAlreadyInstalled ? undefined : handleInstallPWA}
+                  className={`col-span-1 sm:col-span-2 p-3.5 rounded-xl border border-border/30 bg-muted/10 transition-all duration-200 flex items-center justify-between gap-4 ${isAlreadyInstalled
+                    ? "opacity-60 cursor-not-allowed"
+                    : "hover:bg-muted/20 hover:border-primary/20 cursor-pointer"
+                    }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                      <Download className="w-4.5 h-4.5 text-primary" />
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${isAlreadyInstalled ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
+                      }`}>
+                      <Download className="w-4.5 h-4.5" />
                     </div>
                     <div>
                       <h5 className="text-xs font-bold text-foreground">
                         {language === 'id' ? 'Pasang Aplikasi Cashhero (PWA)' : 'Install Cashhero App (PWA)'}
                       </h5>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {language === 'id' 
-                          ? 'Akses cepat langsung dari layar utama dan dapat dibuka secara offline.' 
-                          : 'Quick access directly from your home screen and fully offline compatible.'}
+                        {isAlreadyInstalled
+                          ? (language === 'id'
+                            ? 'Aplikasi telah berhasil terpasang di perangkat Anda.'
+                            : 'Application is successfully installed on your device.')
+                          : (language === 'id'
+                            ? 'Akses cepat langsung dari layar utama dan dapat dibuka secara offline.'
+                            : 'Quick access directly from your home screen and fully offline compatible.')}
                       </p>
                     </div>
                   </div>
-                  <div className="bg-primary/15 text-primary text-[10px] font-bold uppercase px-3 py-1.5 rounded-lg border border-primary/20 shrink-0 select-none">
-                    {language === 'id' ? 'PASANG' : 'INSTALL'}
+                  <div className={`text-[10px] font-bold uppercase px-3 py-1.5 rounded-lg shrink-0 select-none transition-all ${isAlreadyInstalled
+                    ? "bg-muted text-muted-foreground border border-border"
+                    : "bg-primary/15 text-primary border border-primary/20 hover:bg-primary/25 cursor-pointer active:scale-95"
+                    }`}>
+                    {isAlreadyInstalled
+                      ? (language === 'id' ? 'SUDAH TERINSTAL' : 'INSTALLED')
+                      : (language === 'id' ? 'PASANG' : 'INSTALL')
+                    }
                   </div>
                 </div>
               </div>
@@ -1159,7 +1239,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Dynamic Information Banner */}
-      <motion.div 
+      <motion.div
         variants={itemVariants}
         className="p-4 bg-muted/15 border border-border/30 rounded-xl flex items-start gap-3 text-xs text-muted-foreground shadow-sm font-semibold max-w-xl"
       >
@@ -1169,7 +1249,7 @@ export default function SettingsPage() {
             {language === 'id' ? 'INFORMASI APLIKASI' : 'APPLICATION INFO'}
           </p>
           <p className="text-[11px] leading-relaxed">
-            {language === 'id' 
+            {language === 'id'
               ? "Seluruh data Anda disimpan secara mandiri dan aman di penyimpanan lokal peramban Anda (local storage). Kami tidak mengunggah data keuangan Anda ke server mana pun guna menjaga privasi mutlak."
               : "All your data is saved independently and securely in your local browser storage (local storage). We do not upload your financial data to any server to ensure absolute privacy."}
           </p>
@@ -1182,7 +1262,7 @@ export default function SettingsPage() {
       <AnimatePresence>
         {showPinModal && (
           <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -1199,7 +1279,7 @@ export default function SettingsPage() {
               transition={{ type: "spring", stiffness: 350, damping: 28 }}
               className="relative bg-card text-card-foreground border border-border/80 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl p-6 flex flex-col items-center"
             >
-              <button 
+              <button
                 onClick={() => {
                   setShowPinModal(false)
                   resetPinModal()
@@ -1219,7 +1299,7 @@ export default function SettingsPage() {
                 {pinStep === "new" ? lt("setNewPinTitle") : lt("confirmNewPinTitle")}
               </h3>
               <p className="text-xs text-muted-foreground text-center mt-1 max-w-[240px]">
-                {pinStep === "new" 
+                {pinStep === "new"
                   ? (language === 'id' ? 'Buat 6 digit sandi PIN pengaman.' : 'Create a 6-digit security PIN code.')
                   : (language === 'id' ? 'Masukkan kembali PIN untuk validasi.' : 'Re-enter the PIN code for validation.')}
               </p>
@@ -1231,11 +1311,10 @@ export default function SettingsPage() {
                   return (
                     <div
                       key={idx}
-                      className={`w-3 h-3 rounded-full border transition-all duration-200 ${
-                        filled 
-                          ? "bg-primary border-primary scale-110 shadow-sm" 
-                          : "border-muted-foreground/30 bg-muted/30"
-                      }`}
+                      className={`w-3 h-3 rounded-full border transition-all duration-200 ${filled
+                        ? "bg-primary border-primary scale-110 shadow-sm"
+                        : "border-muted-foreground/30 bg-muted/30"
+                        }`}
                     />
                   )
                 })}
@@ -1276,7 +1355,7 @@ export default function SettingsPage() {
       <AnimatePresence>
         {showResetModal && (
           <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -1301,7 +1380,7 @@ export default function SettingsPage() {
                   <p className="text-xs leading-relaxed text-muted-foreground">
                     {lt("resetWarning")}
                   </p>
-                  
+
                   {/* Danger Details */}
                   <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-xl space-y-1.5 my-2">
                     {[
@@ -1320,13 +1399,13 @@ export default function SettingsPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3 mt-6">
-                <button 
+                <button
                   onClick={() => setShowResetModal(false)}
                   className="w-full bg-muted/40 hover:bg-muted/70 border border-border text-foreground py-2 px-4 rounded-lg font-bold text-xs transition-all duration-200 cursor-pointer text-center select-none"
                 >
                   {lt("cancel")}
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setShowResetModal(false)
                     resetAllData()
@@ -1346,7 +1425,7 @@ export default function SettingsPage() {
       <AnimatePresence>
         {showImportModal && (
           <div className="fixed inset-0 z-[10000] flex items-center justify-center px-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -1360,7 +1439,7 @@ export default function SettingsPage() {
               transition={{ type: "spring", stiffness: 350, damping: 28 }}
               className="relative bg-card text-card-foreground border border-border/80 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl p-6"
             >
-              <button 
+              <button
                 onClick={() => setShowImportModal(false)}
                 className="absolute top-4 right-4 w-7 h-7 rounded-full bg-muted/40 hover:bg-muted/70 flex items-center justify-center text-foreground hover:scale-105 active:scale-95 transition-all cursor-pointer"
               >
@@ -1382,22 +1461,22 @@ export default function SettingsPage() {
               </div>
 
               {/* Drag Drop & Select Container */}
-              <div 
+              <div
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={handleFileDrop}
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-border/60 hover:border-primary/50 rounded-xl p-6 text-center cursor-pointer transition-all bg-muted/5 hover:bg-muted/15 flex flex-col items-center justify-center gap-3 group/dropzone my-4 relative"
               >
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   ref={fileInputRef}
                   onChange={handleFileSelect}
                   accept=".json"
                   className="hidden"
                 />
-                
+
                 <Upload className="w-8 h-8 text-muted-foreground group-hover/dropzone:text-primary group-hover/dropzone:scale-105 transition-all" />
-                
+
                 {selectedFile ? (
                   <div className="space-y-1">
                     <p className="text-xs font-bold text-foreground max-w-[280px] truncate">
@@ -1416,13 +1495,13 @@ export default function SettingsPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3 mt-6">
-                <button 
+                <button
                   onClick={() => setShowImportModal(false)}
                   className="w-full bg-muted/40 hover:bg-muted/70 border border-border text-foreground py-2 px-4 rounded-lg font-bold text-xs transition-all duration-200 cursor-pointer text-center select-none"
                 >
                   {lt("cancel")}
                 </button>
-                <button 
+                <button
                   onClick={executeImport}
                   disabled={!selectedFile}
                   className="w-full bg-emerald-500 disabled:bg-muted disabled:text-muted-foreground disabled:border-transparent text-white hover:bg-emerald-600 py-2 px-4 rounded-lg font-bold text-xs transition-all duration-200 cursor-pointer text-center shadow-md flex items-center justify-center gap-1.5 select-none"

@@ -9,6 +9,7 @@ import { MobileHeader, MobileBottomBar } from "@/components/MobileNav";
 import { ToastProvider } from "@/components/ToastProvider";
 import { AutoLogEngine } from "@/components/AutoLogEngine";
 import { ClientLayoutWrapper } from "@/components/ClientLayoutWrapper";
+import { DesktopHeaderUtils } from "@/components/DesktopHeaderUtils";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,11 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Cashhero - Pahlawan Kelola Keuangan Pribadi",
   description: "Pahlawan Kelola Keuangan Pribadi",
+  icons: {
+    icon: "/cashhero-logo.png",
+    shortcut: "/cashhero-logo.png",
+    apple: "/cashhero-logo.png",
+  }
 };
 
 export default function RootLayout({
@@ -44,7 +50,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Cashhero" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="shortcut icon" href="/cashhero-logo.png" type="image/png" />
+        <link rel="icon" href="/cashhero-logo.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/cashhero-logo.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} antialiased flex h-screen w-full overflow-hidden bg-background text-foreground transition-colors duration-300`}
@@ -58,6 +66,7 @@ export default function RootLayout({
           >
             <ClientLayoutWrapper>
               <AutoLogEngine />
+              <DesktopHeaderUtils />
               <DesktopSidebar />
 
               <main className="flex-1 overflow-y-auto pb-24 md:pb-8">

@@ -3,10 +3,65 @@
 import * as React from "react"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { SidebarNav } from "./SidebarNav"
-import { LanguageToggle } from "./LanguageToggle"
-import { ThemeToggle } from "./ThemeToggle"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Settings } from "lucide-react"
 import { LogoIcon } from "./LogoIcon"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { motion } from "framer-motion"
+import { useLanguageStore, translations } from "@/store/useLanguageStore"
+
+function SettingsFooterLink({ isCollapsed }: { isCollapsed: boolean }) {
+  const pathname = usePathname()
+  const { language } = useLanguageStore()
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const t = (key: keyof typeof translations['id']) => {
+    if (!mounted) return translations['id'][key]
+    return translations[language]?.[key] || translations['id'][key]
+  }
+
+  const isSettingsActive = pathname === "/settings"
+
+  if (!mounted) {
+    return (
+      <div className="w-full">
+        <div className={`${isCollapsed ? 'w-12 h-12 mx-auto' : 'h-12'} bg-muted/20 animate-pulse rounded-xl`} />
+      </div>
+    )
+  }
+
+  return (
+    <Link
+      href="/settings"
+      title={isCollapsed ? t('settings') : undefined}
+      className={`flex items-center relative transition-all duration-300 font-medium ${
+        isCollapsed 
+          ? "w-12 h-12 justify-center mx-auto rounded-xl" 
+          : "py-3 px-4 gap-3 w-full rounded-lg"
+      } ${
+        isSettingsActive
+          ? "text-primary-foreground scale-[1.02]"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+      }`}
+    >
+      {isSettingsActive && (
+        <motion.span
+          layoutId="activeSidebarSettingsIndicator"
+          className={`absolute inset-0 bg-primary z-0 shadow-[0_4px_12px_rgba(129,11,56,0.3)] dark:shadow-[0_4px_16px_rgba(157,21,72,0.4)] ${
+            isCollapsed ? "rounded-xl" : "rounded-lg"
+          }`}
+          transition={{ type: "spring", stiffness: 350, damping: 28 }}
+        />
+      )}
+      <Settings className={`w-5 h-5 relative z-10 transition-colors duration-300 ${isSettingsActive ? "text-primary-foreground" : "text-muted-foreground"}`} />
+      {!isCollapsed && <span className="relative z-10 text-sm tracking-wide">{t('settings')}</span>}
+    </Link>
+  )
+}
 
 export function DesktopSidebar() {
   const [mounted, setMounted] = React.useState(false)
@@ -43,14 +98,13 @@ export function DesktopSidebar() {
         </div>
         
         {/* Navigation Area */}
-        <div className="flex-1">
+        <div className="flex-1 w-full overflow-hidden">
           <SidebarNav />
         </div>
-
-        {/* Footer Utilities */}
-        <div className="pt-4 border-t border-sidebar-border/50 flex items-center justify-between gap-2">
-          <LanguageToggle />
-          <ThemeToggle />
+        
+        {/* Settings Footer Section */}
+        <div className="w-full pt-4 border-t border-sidebar-border/40 mt-auto">
+          <SettingsFooterLink isCollapsed={false} />
         </div>
       </aside>
     )
@@ -84,20 +138,13 @@ export function DesktopSidebar() {
       </div>
 
       {/* 2. NAVIGATION MAIN AREA */}
-      <div className="flex-1 w-full">
+      <div className="flex-1 w-full overflow-hidden">
         <SidebarNav isCollapsed={isSidebarCollapsed} />
       </div>
 
-      {/* 3. UTILITY FOOTER SECTION */}
-      <div 
-        className={`w-full pt-4 border-t border-sidebar-border/40 flex ${
-          isSidebarCollapsed 
-            ? "flex-col items-center gap-3.5" 
-            : "items-center justify-between gap-2"
-        }`}
-      >
-        <LanguageToggle />
-        <ThemeToggle />
+      {/* 3. SETTINGS FOOTER SECTION */}
+      <div className="w-full pt-4 border-t border-sidebar-border/40 mt-auto">
+        <SettingsFooterLink isCollapsed={isSidebarCollapsed} />
       </div>
 
       {/* Collapse/Expand Toggle Handle */}

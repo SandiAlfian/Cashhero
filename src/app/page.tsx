@@ -923,15 +923,6 @@ export default function Home() {
           <h1 className="text-3xl font-bold tracking-tight mb-2">{t('dashboard')}</h1>
           <p className="text-muted-foreground">{t('dashboardSubtitle')}</p>
         </div>
-        
-        {/* Weekly Portfolio Update Trigger */}
-        <button 
-          onClick={handleOpenPortfolio}
-          className="self-start md:self-center px-4 py-2.5 bg-primary hover:bg-primary/95 text-primary-foreground font-semibold text-sm rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer duration-200 animate-in fade-in zoom-in-95"
-        >
-          <Briefcase className="w-4 h-4 text-primary-foreground dark:text-rose-100" />
-          <span>{t('updatePortfolio')}</span>
-        </button>
       </motion.div>
 
       {/* Main Row: Cash Flow metrics */}

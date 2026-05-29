@@ -119,7 +119,9 @@ export function AutoLogEngine() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js')
-        .catch((err) => console.warn('[AutoLogEngine] SW registration failed:', err))
+        .catch(() => {
+          // SW registration failed, ignore silently in production
+        })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Hanya dijalankan sekali saat mount (buka aplikasi)

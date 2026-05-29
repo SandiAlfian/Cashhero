@@ -14,6 +14,8 @@ export interface SettingsState {
   biometricsRegistered: boolean
   isSidebarCollapsed: boolean
   hasSetupSecurity: boolean
+  biometricCredentialId?: string
+  isBiometricsSimulated?: boolean
   exchangeRates: Record<MainCurrency, number>
   lastRatesUpdate: string
   ratesSource: 'api' | 'offline'
@@ -24,6 +26,8 @@ export interface SettingsState {
   setSecurityPIN: (enabled: boolean) => void
   setPinCode: (pin: string) => void
   setBiometricsRegistered: (registered: boolean) => void
+  setBiometricCredentialId: (id: string) => void
+  setIsBiometricsSimulated: (simulated: boolean) => void
   toggleSidebar: () => void
   setHasSetupSecurity: (setup: boolean) => void
   fetchExchangeRates: () => Promise<void>
@@ -52,6 +56,8 @@ export const useSettingsStore = create<SettingsState>()(
       biometricsRegistered: false,
       isSidebarCollapsed: false,
       hasSetupSecurity: false,
+      biometricCredentialId: '',
+      isBiometricsSimulated: false,
       exchangeRates: {
         IDR: 1,
         USD: 17825,
@@ -68,6 +74,8 @@ export const useSettingsStore = create<SettingsState>()(
       setSecurityPIN: (securityPIN) => set({ securityPIN }),
       setPinCode: (pinCode) => set({ pinCode }),
       setBiometricsRegistered: (biometricsRegistered) => set({ biometricsRegistered }),
+      setBiometricCredentialId: (biometricCredentialId) => set({ biometricCredentialId }),
+      setIsBiometricsSimulated: (isBiometricsSimulated) => set({ isBiometricsSimulated }),
       toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
       setHasSetupSecurity: (hasSetupSecurity) => set({ hasSetupSecurity }),
       fetchExchangeRates: async () => {
@@ -94,8 +102,8 @@ export const useSettingsStore = create<SettingsState>()(
               ratesSource: 'api'
             })
           }
-        } catch (err) {
-          console.warn('Gagal memuat kurs real-time, menggunakan default offline:', err)
+        } catch {
+          // Gagal memuat kurs real-time, menggunakan default offline
           const fallbackRates = {
             IDR: 1,
             USD: 17825,
