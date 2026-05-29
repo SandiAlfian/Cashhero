@@ -26,24 +26,28 @@ export function PWAInstallPrompt() {
 
     // 2. Capture beforeinstallprompt for Chrome / Android / Edge / Safari (on supported devices)
     const handleBeforeInstall = (e: Event) => {
+      e.preventDefault() // Crucial to prevent default infobar
+      
       // Store in window for settings page or other parts of the app to access
       const globalWindow = window as unknown as Window & { deferredPwaPrompt?: BeforeInstallPromptEvent }
       globalWindow.deferredPwaPrompt = e as BeforeInstallPromptEvent
 
       // 3. Check if user already dismissed it
       const hasDismissed = localStorage.getItem("cashhero-pwa-dismissed") === "true"
-      const hasInstalled = localStorage.getItem("cashhero-pwa-installed") === "true"
+      
+      // We do NOT block if they previously installed but are currently NOT in standalone mode (meaning they uninstalled)
+      // They are in a browser tab, so we can prompt them again if they haven't dismissed it
+      const standaloneMode = window.matchMedia("(display-mode: standalone)").matches 
+        || ("standalone" in window.navigator && (window.navigator as Navigator & { standalone?: boolean }).standalone === true)
 
-      if (!hasDismissed && !hasInstalled) {
+      if (!hasDismissed && !standaloneMode) {
         const installEvent = e as BeforeInstallPromptEvent
-        // Delay slightly to ensure page is loaded, interactive, and splash screen is gone
+        // Delay slightly to ensure page is loaded
         setTimeout(() => {
           installEvent.prompt()
             .then(() => installEvent.userChoice)
             .then((choiceResult) => {
-              if (choiceResult.outcome === "accepted") {
-                localStorage.setItem("cashhero-pwa-installed", "true")
-              } else {
+              if (choiceResult.outcome === "dismissed") {
                 localStorage.setItem("cashhero-pwa-dismissed", "true")
               }
             })
