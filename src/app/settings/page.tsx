@@ -233,34 +233,44 @@ export default function SettingsPage() {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches
         || ('standalone' in window.navigator && (window.navigator as Navigator & { standalone?: boolean }).standalone === true)
 
-      const wasInstalled = localStorage.getItem("cashhero-pwa-installed") === "true"
-      setIsAlreadyInstalled(isStandalone || wasInstalled)
+      setIsAlreadyInstalled(isStandalone)
     }
 
     checkIsInstalled()
 
     // 2. Load globally deferred prompt if available
-    const globalWindow = window as unknown as Window & { deferredPwaPrompt?: BeforeInstallPromptEvent }
-    if (globalWindow.deferredPwaPrompt) {
-      setPwaPrompt(globalWindow.deferredPwaPrompt)
-    }
+    let checks = 0
+    const promptCheckInterval = setInterval(() => {
+      const globalWindow = window as unknown as Window & { deferredPwaPrompt?: BeforeInstallPromptEvent }
+      if (globalWindow.deferredPwaPrompt) {
+        setPwaPrompt(globalWindow.deferredPwaPrompt)
+        setIsAlreadyInstalled(false) // If prompt exists, it means it can be installed and is not currently standalone
+        clearInterval(promptCheckInterval)
+      }
+      checks++
+      if (checks >= 10) clearInterval(promptCheckInterval) // stop after 5s
+    }, 500)
 
     const handleBeforePrompt = (e: Event) => {
       e.preventDefault()
       setPwaPrompt(e as BeforeInstallPromptEvent)
       const gw = window as unknown as Window & { deferredPwaPrompt?: BeforeInstallPromptEvent }
       gw.deferredPwaPrompt = e as BeforeInstallPromptEvent
+      setIsAlreadyInstalled(false)
     }
 
     const handleAppInstalled = () => {
-      localStorage.setItem("cashhero-pwa-installed", "true")
       setIsAlreadyInstalled(true)
+      setPwaPrompt(null)
+      const gw = window as unknown as Window & { deferredPwaPrompt?: BeforeInstallPromptEvent | null }
+      gw.deferredPwaPrompt = null
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforePrompt)
     window.addEventListener('appinstalled', handleAppInstalled)
 
     return () => {
+      clearInterval(promptCheckInterval)
       window.removeEventListener('beforeinstallprompt', handleBeforePrompt)
       window.removeEventListener('appinstalled', handleAppInstalled)
     }
@@ -305,7 +315,6 @@ export default function SettingsPage() {
         const gw = window as unknown as Window & { deferredPwaPrompt?: BeforeInstallPromptEvent | null }
         gw.deferredPwaPrompt = null
       }
-      localStorage.setItem("cashhero-pwa-installed", "true")
       setIsAlreadyInstalled(true)
     }
   }
@@ -466,10 +475,12 @@ export default function SettingsPage() {
         const userId = new Uint8Array(16)
         window.crypto.getRandomValues(userId)
 
+        const rpId = window.location.hostname
+
         const options: CredentialCreationOptions = {
           publicKey: {
             challenge,
-            rp: { name: "Cashhero" },
+            rp: { name: "Cashhero", id: rpId },
             user: {
               id: userId,
               name: email || "user@cashhero.app",
@@ -494,22 +505,27 @@ export default function SettingsPage() {
           setIsBiometricsSimulated(false)
           setBiometricCredentialId(credIdBase64)
           triggerToast(lt("biometricRegisterSuccess"))
-          return
         }
-      } catch {
-        // WebAuthn platform authenticator failed, falling back to simulated mode
+        return // Successfully handled or canceled natively without needing simulation
+      } catch (err: unknown) {
+        console.error("WebAuthn Registration Error:", err)
+        triggerToast(
+          language === 'id' 
+            ? `Pendaftaran biometrik gagal: ${(err as Error).message || 'Dibatalkan atau perangkat tidak mendukung'}`
+            : `Biometric registration failed: ${(err as Error).message || 'Canceled or unsupported device'}`
+        )
+        return
       }
     }
 
-    // Fallback simulation/prompt for local or sandbox environment
-    // Allow users to force-toggle or confirm so it still works seamlessly
+    // Fallback simulation/prompt ONLY for insecure/local environment that lacks WebAuthn
     setBiometricsRegistered(true)
     setIsBiometricsSimulated(true)
     setBiometricCredentialId("")
     triggerToast(
       language === 'id'
-        ? "Mode Simulasi Biometrik diaktifkan karena koneksi IP Lokal/Non-HTTPS!"
-        : "Biometrics Simulation Mode activated due to Local IP/Non-HTTPS connection!"
+        ? "Mode Simulasi Biometrik diaktifkan karena browser/koneksi tidak mendukung WebAuthn."
+        : "Biometrics Simulation Mode activated due to unsupported browser/connection."
     )
   }
 

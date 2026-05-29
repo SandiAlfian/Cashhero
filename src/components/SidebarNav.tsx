@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
-import { LayoutDashboard, History, PiggyBank, TrendingUp, Calendar, Settings } from "lucide-react"
+import { LayoutDashboard, History, PiggyBank, TrendingUp, Calendar } from "lucide-react"
 import { useLanguageStore, translations } from "@/store/useLanguageStore"
 import * as React from "react"
 
@@ -56,14 +56,9 @@ export function SidebarNav({ isCollapsed = false }: { isCollapsed?: boolean }) {
           <div className={`${isCollapsed ? 'w-12 h-12 mx-auto' : 'h-12'} bg-muted/20 animate-pulse rounded-xl`} />
           <div className={`${isCollapsed ? 'w-12 h-12 mx-auto' : 'h-12'} bg-muted/20 animate-pulse rounded-xl`} />
         </nav>
-        <div className="mt-auto pt-6 border-t border-sidebar-border">
-          <div className={`${isCollapsed ? 'w-12 h-12 mx-auto' : 'h-12'} bg-muted/20 animate-pulse rounded-xl`} />
-        </div>
       </div>
     )
   }
-
-  const isSettingsActive = pathname === "/settings"
 
   return (
     <div className="flex flex-col flex-1 relative z-10">

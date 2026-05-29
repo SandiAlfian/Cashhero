@@ -16,6 +16,15 @@ const base64ToBuffer = (base64: string): ArrayBuffer => {
   return bytes.buffer
 }
 
+const bufferToBase64 = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer)
+  let binary = ''
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return window.btoa(binary)
+}
+
 export function SecurityLockScreen() {
   const [mounted, setMounted] = React.useState(false)
   const [enteredPin, setEnteredPin] = React.useState("")
@@ -140,6 +149,7 @@ export function SecurityLockScreen() {
       const options: CredentialRequestOptions = {
         publicKey: {
           challenge,
+          rpId: window.location.hostname,
           timeout: 60000,
           allowCredentials: [{
             id: credIdBuffer,
@@ -155,9 +165,10 @@ export function SecurityLockScreen() {
         setIsUnlocked(true)
         setTimeout(() => setCompletelyRemoved(true), 600)
       }
-    } catch {
-      // Fallback to our custom simulated overlay so the user is never stuck
-      setShowSimulatedScan(true)
+    } catch (err: unknown) {
+      console.error("WebAuthn Auth Error:", err)
+      // Do NOT fallback to simulation if they actually have a real biometric id.
+      // If they cancel, they can just use PIN.
     }
   }, [isBiometricsSimulated, biometricCredentialId])
 
@@ -203,19 +214,28 @@ export function SecurityLockScreen() {
               try {
                 const challenge = new Uint8Array(32)
                 window.crypto.getRandomValues(challenge)
+                const rpId = window.location.hostname
+
                 const credential = await navigator.credentials.create({
                   publicKey: {
                     challenge,
-                    rp: { name: "Cashhero" },
+                    rp: { name: "Cashhero", id: rpId },
                     user: { id: challenge, name: username, displayName: username },
-                    pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+                    pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
                     authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
                     timeout: 60000
                   }
-                })
-                if (credential) setBiometricsRegistered(true)
-              } catch {
-                // Biometrics setup skipped or failed
+                }) as PublicKeyCredential | null
+
+                if (credential) {
+                  const credIdBase64 = bufferToBase64(credential.rawId)
+                  setBiometricsRegistered(true)
+                  useSettingsStore.getState().setIsBiometricsSimulated(false)
+                  useSettingsStore.getState().setBiometricCredentialId(credIdBase64)
+                }
+              } catch (err) {
+                console.error("WebAuthn initial setup failed", err)
+                // Biometrics setup skipped or failed natively
               }
             }
             
