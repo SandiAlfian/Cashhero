@@ -4,6 +4,7 @@
 
 import { Transaction } from "@/store/useTransactionStore"
 import { AssetHistoryLog } from "@/store/usePortfolioStore"
+import { useSettingsStore, EXCHANGE_RATES } from "@/store/useSettingsStore"
 
 interface Totals {
   income: number
@@ -35,14 +36,23 @@ export function exportToExcel(
     ? ["Tanggal", "Kategori", "Catatan", "Tipe", "Nominal"]
     : ["Date", "Category", "Note", "Type", "Amount"]
 
-  // Formatting helper
+  // Dynamic currency format helper
+  const state = typeof window !== 'undefined' ? useSettingsStore.getState() : null
+  const currency = state?.currency || 'IDR'
+  const rate = state?.exchangeRates?.[currency] || EXCHANGE_RATES[currency] || 1
+  
   const fmt = (num: number) => {
+    const converted = num / rate
+    const isJapanOrIndo = currency === 'JPY' || currency === 'IDR'
+    const hasDecimals = converted % 1 !== 0
+    const decimals = isJapanOrIndo ? 0 : (hasDecimals ? 2 : 0)
+
     return new Intl.NumberFormat(isId ? 'id-ID' : 'en-US', {
       style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(num)
+      currency: currency,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(converted)
   }
 
   // Row generation with premium zebra styling
@@ -240,13 +250,23 @@ export function exportToPDF(
     ? ["Tanggal", "Kategori", "Catatan", "Tipe", "Nominal"]
     : ["Date", "Category", "Note", "Type", "Amount"]
 
+  // Dynamic currency format helper
+  const state = typeof window !== 'undefined' ? useSettingsStore.getState() : null
+  const currency = state?.currency || 'IDR'
+  const rate = state?.exchangeRates?.[currency] || EXCHANGE_RATES[currency] || 1
+  
   const fmt = (num: number) => {
+    const converted = num / rate
+    const isJapanOrIndo = currency === 'JPY' || currency === 'IDR'
+    const hasDecimals = converted % 1 !== 0
+    const decimals = isJapanOrIndo ? 0 : (hasDecimals ? 2 : 0)
+
     return new Intl.NumberFormat(isId ? 'id-ID' : 'en-US', {
       style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(num)
+      currency: currency,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(converted)
   }
 
   const rowsHtml = transactions.map((t, idx) => {
@@ -512,14 +532,23 @@ export function exportAssetHistoryToExcel(
   const totalLiquidated = logs.filter(l => l.type === 'liquidation').reduce((sum, l) => sum + l.amount, 0)
   const currentNetValue = totalCapital + netGainLoss - totalLiquidated
 
-  // Formatting helper
+  // Dynamic currency format helper
+  const state = typeof window !== 'undefined' ? useSettingsStore.getState() : null
+  const currency = state?.currency || 'IDR'
+  const rate = state?.exchangeRates?.[currency] || EXCHANGE_RATES[currency] || 1
+  
   const fmt = (num: number) => {
+    const converted = num / rate
+    const isJapanOrIndo = currency === 'JPY' || currency === 'IDR'
+    const hasDecimals = converted % 1 !== 0
+    const decimals = isJapanOrIndo ? 0 : (hasDecimals ? 2 : 0)
+
     return new Intl.NumberFormat(isId ? 'id-ID' : 'en-US', {
       style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(num)
+      currency: currency,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(converted)
   }
 
   // Row generation
@@ -722,14 +751,23 @@ export function exportAssetHistoryToPDF(
   const totalLiquidated = logs.filter(l => l.type === 'liquidation').reduce((sum, l) => sum + l.amount, 0)
   const currentNetValue = totalCapital + netGainLoss - totalLiquidated
 
-  // Formatting helper
+  // Dynamic currency format helper
+  const state = typeof window !== 'undefined' ? useSettingsStore.getState() : null
+  const currency = state?.currency || 'IDR'
+  const rate = state?.exchangeRates?.[currency] || EXCHANGE_RATES[currency] || 1
+  
   const fmt = (num: number) => {
+    const converted = num / rate
+    const isJapanOrIndo = currency === 'JPY' || currency === 'IDR'
+    const hasDecimals = converted % 1 !== 0
+    const decimals = isJapanOrIndo ? 0 : (hasDecimals ? 2 : 0)
+
     return new Intl.NumberFormat(isId ? 'id-ID' : 'en-US', {
       style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(num)
+      currency: currency,
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(converted)
   }
 
   const rowsHtml = [...logs].reverse().map((log, idx) => {

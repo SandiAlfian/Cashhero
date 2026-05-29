@@ -14,6 +14,9 @@ export interface SettingsState {
   biometricsRegistered: boolean
   isSidebarCollapsed: boolean
   hasSetupSecurity: boolean
+  exchangeRates: Record<MainCurrency, number>
+  lastRatesUpdate: string
+  ratesSource: 'api' | 'offline'
   setProfile: (username: string, email: string) => void
   setCurrency: (currency: MainCurrency) => void
   setDefaultHistoryFilter: (filter: 'daily' | 'weekly' | 'monthly') => void
@@ -23,16 +26,17 @@ export interface SettingsState {
   setBiometricsRegistered: (registered: boolean) => void
   toggleSidebar: () => void
   setHasSetupSecurity: (setup: boolean) => void
+  fetchExchangeRates: () => Promise<void>
   resetAllData: () => void
 }
 
 // Fixed Exchange Rates relative to IDR (Base currency is always stored in IDR)
 export const EXCHANGE_RATES: Record<MainCurrency, number> = {
   IDR: 1,
-  USD: 16000,
-  EUR: 17500,
-  SGD: 12000,
-  JPY: 102
+  USD: 17825,
+  EUR: 20650,
+  SGD: 13950,
+  JPY: 112
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -48,6 +52,15 @@ export const useSettingsStore = create<SettingsState>()(
       biometricsRegistered: false,
       isSidebarCollapsed: false,
       hasSetupSecurity: false,
+      exchangeRates: {
+        IDR: 1,
+        USD: 17825,
+        EUR: 20650,
+        SGD: 13950,
+        JPY: 112
+      },
+      lastRatesUpdate: '',
+      ratesSource: 'offline',
       setProfile: (username, email) => set({ username, email }),
       setCurrency: (currency) => set({ currency }),
       setDefaultHistoryFilter: (defaultHistoryFilter) => set({ defaultHistoryFilter }),
@@ -57,6 +70,46 @@ export const useSettingsStore = create<SettingsState>()(
       setBiometricsRegistered: (biometricsRegistered) => set({ biometricsRegistered }),
       toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
       setHasSetupSecurity: (hasSetupSecurity) => set({ hasSetupSecurity }),
+      fetchExchangeRates: async () => {
+        try {
+          const res = await fetch('https://open.er-api.com/v6/latest/IDR')
+          if (!res.ok) throw new Error('API request failed')
+          const data = await res.json()
+          if (data && data.result === 'success' && data.rates) {
+            const rates = data.rates
+            const newRates: Record<MainCurrency, number> = {
+              IDR: 1,
+              USD: rates.USD ? Math.round(1 / rates.USD) : 17825,
+              EUR: rates.EUR ? Math.round(1 / rates.EUR) : 20650,
+              SGD: rates.SGD ? Math.round(1 / rates.SGD) : 13950,
+              JPY: rates.JPY ? Math.round(1 / rates.JPY) : 112,
+            }
+            
+            // Mutate global constant for immediate non-reactive usage
+            Object.assign(EXCHANGE_RATES, newRates)
+
+            set({
+              exchangeRates: newRates,
+              lastRatesUpdate: new Date().toISOString(),
+              ratesSource: 'api'
+            })
+          }
+        } catch (err) {
+          console.warn('Gagal memuat kurs real-time, menggunakan default offline:', err)
+          const fallbackRates = {
+            IDR: 1,
+            USD: 17825,
+            EUR: 20650,
+            SGD: 13950,
+            JPY: 112
+          }
+          Object.assign(EXCHANGE_RATES, fallbackRates)
+          set({
+            exchangeRates: fallbackRates,
+            ratesSource: 'offline'
+          })
+        }
+      },
       resetAllData: () => {
         if (typeof window !== 'undefined') {
           // Clear all Cashhero local storage keys

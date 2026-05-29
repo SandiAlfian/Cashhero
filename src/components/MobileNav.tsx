@@ -15,11 +15,18 @@ import {
 import { useLanguageStore, translations } from "@/store/useLanguageStore"
 import { LanguageToggle } from "./LanguageToggle"
 import { ThemeToggle } from "./ThemeToggle"
+import { LogoIcon } from "./LogoIcon"
 
 export function MobileHeader() {
   return (
     <header className="flex md:hidden items-center justify-between px-6 py-4 bg-sidebar border-b border-sidebar-border sticky top-0 z-30 transition-colors duration-300 no-print">
-      <div className="font-bold text-xl text-primary tracking-tight">Cashhero</div>
+      <div className="flex items-center gap-2 select-none">
+        <LogoIcon className="w-7 h-7 shrink-0" size={28} />
+        <span className="font-extrabold text-base tracking-tight">
+          <span className="text-[#2D2B33] dark:text-[#F3EBE1]">Cash</span>
+          <span className="text-primary font-black">Hero</span>
+        </span>
+      </div>
       <div className="flex items-center gap-2 shrink-0">
         <LanguageToggle />
         <ThemeToggle />
@@ -151,7 +158,7 @@ export function MobileBottomBar() {
               }`} 
             />
             <span 
-              className={`text-[9px] font-bold tracking-wider relative z-10 uppercase transition-colors duration-300 ${
+              className={`text-[8px] font-bold tracking-wider relative z-10 uppercase transition-colors duration-300 ${
                 isActive 
                   ? "text-primary font-extrabold" 
                   : "text-muted-foreground/80"

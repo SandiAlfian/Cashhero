@@ -6,6 +6,7 @@ import { SidebarNav } from "./SidebarNav"
 import { LanguageToggle } from "./LanguageToggle"
 import { ThemeToggle } from "./ThemeToggle"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { LogoIcon } from "./LogoIcon"
 
 export function DesktopSidebar() {
   const [mounted, setMounted] = React.useState(false)
@@ -16,17 +17,41 @@ export function DesktopSidebar() {
     setMounted(true)
   }, [])
 
+  // Component-scoped font face definition to ensure Adumu font is always rendered in sidebar
+  const fontStyle = (
+    <style>{`
+      @font-face {
+        font-family: 'Adumu';
+        src: url('/fonts/Adumu.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+      }
+    `}</style>
+  )
+
   if (!mounted) {
     return (
       <aside className="hidden md:flex w-66 shrink-0 bg-sidebar flex-col p-6 border-r border-sidebar-border relative z-10">
-        <div className="flex items-center justify-between mb-8">
-          <div className="font-bold text-xl text-primary tracking-tight">Cashhero</div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <LanguageToggle />
-            <ThemeToggle />
-          </div>
+        {fontStyle}
+        {/* Clean, dedicated brand header */}
+        <div className="flex items-center gap-2.5 mb-8 pb-4 border-b border-sidebar-border/50">
+          <LogoIcon className="w-8 h-8 shrink-0" size={32} />
+          <span className="font-extrabold text-xl tracking-tight select-none">
+            <span className="text-[#2D2B33] dark:text-[#F3EBE1]">Cash</span>
+            <span className="text-primary font-black">Hero</span>
+          </span>
         </div>
-        <SidebarNav />
+        
+        {/* Navigation Area */}
+        <div className="flex-1">
+          <SidebarNav />
+        </div>
+
+        {/* Footer Utilities */}
+        <div className="pt-4 border-t border-sidebar-border/50 flex items-center justify-between gap-2">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
       </aside>
     )
   }
@@ -34,27 +59,48 @@ export function DesktopSidebar() {
   return (
     <aside
       className={`hidden md:flex shrink-0 bg-sidebar flex-col border-r border-sidebar-border relative z-10 transition-all duration-300 ease-in-out ${
-        isSidebarCollapsed ? "w-24 p-4 items-center" : "w-66 p-6"
+        isSidebarCollapsed ? "w-20 p-4 items-center" : "w-66 p-6"
       }`}
     >
-      <div className={`flex items-center w-full mb-8 ${isSidebarCollapsed ? "justify-center flex-col gap-4" : "justify-between"}`}>
+      {fontStyle}
+      
+      {/* 1. BRAND HEADER SECTION */}
+      <div 
+        className={`flex items-center w-full mb-8 pb-4 border-b border-sidebar-border/40 ${
+          isSidebarCollapsed ? "justify-center" : "justify-start gap-2.5"
+        }`}
+      >
         {!isSidebarCollapsed ? (
-          <div className="font-bold text-xl text-primary tracking-tight whitespace-nowrap overflow-hidden">
-            Cashhero
-          </div>
+          <>
+            <LogoIcon className="w-8 h-8 shrink-0 transition-transform duration-300 hover:scale-105" size={32} />
+            <span className="font-extrabold text-xl tracking-tight select-none">
+              <span className="text-[#2D2B33] dark:text-[#F3EBE1]">Cash</span>
+              <span className="text-primary font-black">Hero</span>
+            </span>
+          </>
         ) : (
-          <div className="font-bold text-2xl text-primary tracking-tight">
-            C
-          </div>
+          <LogoIcon className="w-9 h-9 shrink-0 hover:scale-110 transition-transform duration-300" size={36} />
         )}
-        <div className={`flex items-center gap-1.5 shrink-0 ${isSidebarCollapsed ? "flex-col" : ""}`}>
-          <LanguageToggle />
-          <ThemeToggle />
-        </div>
       </div>
 
-      <SidebarNav isCollapsed={isSidebarCollapsed} />
+      {/* 2. NAVIGATION MAIN AREA */}
+      <div className="flex-1 w-full">
+        <SidebarNav isCollapsed={isSidebarCollapsed} />
+      </div>
 
+      {/* 3. UTILITY FOOTER SECTION */}
+      <div 
+        className={`w-full pt-4 border-t border-sidebar-border/40 flex ${
+          isSidebarCollapsed 
+            ? "flex-col items-center gap-3.5" 
+            : "items-center justify-between gap-2"
+        }`}
+      >
+        <LanguageToggle />
+        <ThemeToggle />
+      </div>
+
+      {/* Collapse/Expand Toggle Handle */}
       <button
         onClick={toggleSidebar}
         className="absolute -right-3 top-10 bg-primary text-primary-foreground p-1 rounded-full shadow-md hover:scale-110 transition-all z-20 cursor-pointer"

@@ -37,7 +37,6 @@ import { exportAssetHistoryToExcel, exportAssetHistoryToPDF } from "@/lib/export
 import { formatCurrency, formatRelativeDate } from "@/lib/format"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { motion, AnimatePresence, Variants } from "framer-motion"
-import { useToast } from "@/components/ToastProvider"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface CfDataPoint { date: string; dateEn: string; income: number; expense: number }
@@ -691,11 +690,16 @@ export default function Home() {
   }
 
   const handleStartEdit = (asset: InvestmentAsset) => {
+    const state = useSettingsStore.getState()
+    const rate = state.exchangeRates[state.currency] || 1
+    const displayInitial = Math.round(asset.initialCapital / rate)
+    const displayGainLoss = Math.round(Math.abs(asset.realizedGainLoss) / rate)
+
     setEditingAsset(asset)
     setAssetNameInput(asset.name)
     setAssetTypeInput(asset.type)
-    setAssetInitialInput(new Intl.NumberFormat("id-ID").format(asset.initialCapital))
-    setAssetGainLossInput(new Intl.NumberFormat("id-ID").format(Math.abs(asset.realizedGainLoss)))
+    setAssetInitialInput(new Intl.NumberFormat("id-ID").format(displayInitial))
+    setAssetGainLossInput(new Intl.NumberFormat("id-ID").format(displayGainLoss))
     setAssetGainLossType(asset.realizedGainLoss >= 0 ? 'profit' : 'loss')
     setIsAdding(false)
   }
@@ -715,14 +719,17 @@ export default function Home() {
   const parseNum = (str: string) => Number(str.replace(/\D/g, "")) || 0
 
   const handleSaveAsset = () => {
-    const initialVal = parseNum(assetInitialInput)
-    const glVal = parseNum(assetGainLossInput) * (assetGainLossType === 'profit' ? 1 : -1)
+    const state = useSettingsStore.getState()
+    const rate = state.exchangeRates[state.currency] || 1
+
+    const initialVal = parseNum(assetInitialInput) * rate
+    const glVal = parseNum(assetGainLossInput) * (assetGainLossType === 'profit' ? 1 : -1) * rate
     const trimmedName = assetNameInput.trim()
     
     if (!trimmedName) return
 
     if (editingAsset) {
-      // 1. Catat log penyesuaian modal kustom jika modal awal disesuaikan
+      // 1. Catat log penyesuaian modal kustom jika modal awal disesuaikan (stored in IDR)
       if (initialVal !== editingAsset.initialCapital) {
         const diffCap = initialVal - editingAsset.initialCapital
         addAssetHistoryLog(
@@ -735,7 +742,7 @@ export default function Home() {
         )
       }
 
-      // 2. Catat log keuntungan/kerugian kustom jika realized gain/loss disesuaikan
+      // 2. Catat log keuntungan/kerugian kustom jika realized gain/loss disesuaikan (stored in IDR)
       // Tanpa pemanggilan addTransaction (Saldo Tunai tidak terpengaruh)
       if (glVal !== editingAsset.realizedGainLoss) {
         const diffGL = glVal - editingAsset.realizedGainLoss
@@ -756,7 +763,7 @@ export default function Home() {
         realizedGainLoss: glVal
       })
     } else if (isAdding) {
-      // 3. Catat log riwayat awal kustom untuk aset baru
+      // 3. Catat log riwayat awal kustom untuk aset baru (stored in IDR)
       const initialLogs: Omit<AssetHistoryLog, 'id' | 'date'>[] = []
       if (initialVal > 0) {
         initialLogs.push({
@@ -840,7 +847,9 @@ export default function Home() {
   const handleExecutePartialLiquidation = () => {
     if (!liqAsset) return
 
-    const liqAmt = parseNum(partialLiqAmountInput)
+    const state = useSettingsStore.getState()
+    const rate = state.exchangeRates[state.currency] || 1
+    const liqAmt = parseNum(partialLiqAmountInput) * rate
     if (liqAmt <= 0) return
 
     const netVal = liqAsset.initialCapital + liqAsset.realizedGainLoss
@@ -864,7 +873,7 @@ export default function Home() {
 
     addAssetHistoryLog(
       liqAsset.id,
-      liqAmt,
+      liqAmt, // stored in IDR
       'liquidation',
       language === 'id' 
         ? `Likuidasi Sebagian Aset` 
@@ -875,7 +884,7 @@ export default function Home() {
     const note = noteTemplate.replace('[Nama Aset]', liqAsset.name)
 
     addTransaction({
-      amount: liqAmt,
+      amount: liqAmt, // stored in IDR
       type: 'in',
       category: 'Investasi',
       note: note,
@@ -939,7 +948,7 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-card-foreground">
-              {mounted ? formatCurrency(balance, language) : "Rp 0"}
+              {mounted ? formatCurrency(balance, language) : formatCurrency(0, language)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">{t('currentTotal')}</p>
           </CardContent>
@@ -957,7 +966,7 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-card-foreground">
-              {mounted ? formatCurrency(totalIn, language) : "Rp 0"}
+              {mounted ? formatCurrency(totalIn, language) : formatCurrency(0, language)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">{periodSubLabel}</p>
           </CardContent>
@@ -975,7 +984,7 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-card-foreground">
-              {mounted ? formatCurrency(totalOut, language) : "Rp 0"}
+              {mounted ? formatCurrency(totalOut, language) : formatCurrency(0, language)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">{periodSubLabel}</p>
           </CardContent>
@@ -1002,7 +1011,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-extrabold text-foreground tracking-tight">
-                {mounted ? formatCurrency(netWorth, language) : "Rp 0"}
+                {mounted ? formatCurrency(netWorth, language) : formatCurrency(0, language)}
               </div>
               <p className="text-xs text-muted-foreground mt-2">
                 {language === 'id' 
@@ -1012,17 +1021,17 @@ export default function Home() {
               <div className="flex items-center gap-4 mt-5 pt-4 border-t border-border/40 text-xs flex-wrap">
                 <div>
                   <span className="text-muted-foreground block mb-0.5">{t('cashBalance')}</span>
-                  <span className="font-semibold text-foreground">{mounted ? formatCurrency(balance, language) : "Rp 0"}</span>
+                  <span className="font-semibold text-foreground">{mounted ? formatCurrency(balance, language) : formatCurrency(0, language)}</span>
                 </div>
                 <div className="w-[1px] h-6 bg-border/60" />
                 <div>
                   <span className="text-muted-foreground block mb-0.5">{t('totalInvestment')}</span>
-                  <span className="font-semibold text-primary">{mounted ? formatCurrency(totalInvestment, language) : "Rp 0"}</span>
+                  <span className="font-semibold text-primary">{mounted ? formatCurrency(totalInvestment, language) : formatCurrency(0, language)}</span>
                 </div>
                 <div className="w-[1px] h-6 bg-border/60" />
                 <div>
                   <span className="text-muted-foreground block mb-0.5">{language === 'id' ? 'Total Tabungan' : 'Total Savings'}</span>
-                  <span className="font-semibold text-green-500">{mounted ? formatCurrency(totalSavings, language) : "Rp 0"}</span>
+                  <span className="font-semibold text-green-500">{mounted ? formatCurrency(totalSavings, language) : formatCurrency(0, language)}</span>
                 </div>
               </div>
             </CardContent>
@@ -1047,7 +1056,7 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-extrabold text-foreground tracking-tight group-hover:text-primary transition-colors">
-                {mounted ? formatCurrency(totalInvestment, language) : "Rp 0"}
+                {mounted ? formatCurrency(totalInvestment, language) : formatCurrency(0, language)}
               </div>
               
               <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-border/40 text-xs">
@@ -1061,7 +1070,7 @@ export default function Home() {
                           assets.filter(a => a.type === 'stocks').reduce((acc, a) => acc + (a.initialCapital + a.realizedGainLoss), 0), 
                           language
                         ) 
-                      : "Rp 0"
+                      : formatCurrency(0, language)
                     }
                   </span>
                 </div>
@@ -1075,7 +1084,7 @@ export default function Home() {
                           assets.filter(a => a.type === 'crypto').reduce((acc, a) => acc + (a.initialCapital + a.realizedGainLoss), 0), 
                           language
                         ) 
-                      : "Rp 0"
+                      : formatCurrency(0, language)
                     }
                   </span>
                 </div>
@@ -1089,7 +1098,7 @@ export default function Home() {
                           assets.filter(a => a.type === 'other').reduce((acc, a) => acc + (a.initialCapital + a.realizedGainLoss), 0), 
                           language
                         ) 
-                      : "Rp 0"
+                      : formatCurrency(0, language)
                     }
                   </span>
                 </div>
@@ -1175,7 +1184,7 @@ export default function Home() {
                       </div>
                     </div>
                     <div className={`font-semibold text-sm ${item.type === 'in' ? 'text-green-600 dark:text-green-400' : 'text-card-foreground'}`}>
-                      {item.type === 'in' ? '+' : '-'}{mounted ? formatCurrency(item.amount, language) : "Rp 0"}
+                      {item.type === 'in' ? '+' : '-'}{mounted ? formatCurrency(item.amount, language) : formatCurrency(0, language)}
                     </div>
                   </div>
                 )
@@ -1584,7 +1593,15 @@ export default function Home() {
 
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  {language === 'id' ? 'Nominal Likuidasi (Rp)' : 'Liquidation Amount (Rp)'}
+                  {language === 'id' ? 'Nominal Likuidasi' : 'Liquidation Amount'} ({
+                    {
+                      IDR: 'Rp',
+                      USD: '$',
+                      EUR: '€',
+                      SGD: 'S$',
+                      JPY: '¥'
+                    }[activeCurrency] || 'Rp'
+                  })
                 </label>
                 <Input
                   type="text"

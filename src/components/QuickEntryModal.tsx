@@ -16,6 +16,7 @@ import { useTransactionStore } from "@/store/useTransactionStore"
 import { useLanguageStore, translations } from "@/store/useLanguageStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { usePlanningStore } from "@/store/usePlanningStore"
+import { formatCurrency } from "@/lib/format"
 import { motion, AnimatePresence } from "framer-motion"
 import { Check } from "lucide-react"
 
@@ -41,6 +42,8 @@ export function QuickEntryModal() {
   const goals = usePlanningStore((state) => state.goals)
   const updateGoal = usePlanningStore((state) => state.updateGoal)
   const { language } = useLanguageStore()
+  const activeCurrency = useSettingsStore((state) => state.currency)
+  const exchangeRates = useSettingsStore((state) => state.exchangeRates)
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
@@ -136,38 +139,41 @@ export function QuickEntryModal() {
   const handleSave = () => {
     if (!amount || isNaN(Number(amount)) || !note) return
 
+    const rate = exchangeRates[activeCurrency] || 1
+    const amountInIdr = Number(amount) * rate
+
     if (activeTab === 'saving') {
       if (!selectedGoalId) return
       const goal = goals.find((g) => g.id === selectedGoalId)
       if (!goal) return
 
-      // 1. Akumulasi pencapaian target tabungan di Perencanaan
-      updateGoal(goal.id, goal.title, goal.target, goal.collected + Number(amount), goal.iconName)
+      // 1. Akumulasi pencapaian target tabungan di Perencanaan (stored in IDR)
+      updateGoal(goal.id, goal.title, goal.target, goal.collected + amountInIdr, goal.iconName)
 
       // 2. Catat transaksi di Riwayat Transaksi dengan Kategori 'Tabungan' (tidak mempengaruhi saldo tunai)
       addTransaction({
         type: deductCash ? 'out' : 'in',
-        amount: Number(amount),
+        amount: amountInIdr,
         category: 'Tabungan',
         note: note.trim(),
       })
       triggerToast(
         language === 'id' 
-          ? `Berhasil menambah tabungan Rp${new Intl.NumberFormat("id-ID").format(Number(amount))} ke "${goal.title}"!`
-          : `Successfully added Rp${new Intl.NumberFormat("id-ID").format(Number(amount))} savings to "${goal.title}"!`
+          ? `Berhasil menambah tabungan ${formatCurrency(amountInIdr, language)} ke "${goal.title}"!`
+          : `Successfully added ${formatCurrency(amountInIdr, language)} savings to "${goal.title}"!`
       )
     } else {
       if (!category) return
       addTransaction({
         type: activeTab,
-        amount: Number(amount),
+        amount: amountInIdr,
         category: category.trim(),
         note: note.trim(),
       })
       triggerToast(
         activeTab === 'in'
-          ? (language === 'id' ? `Pemasukan Rp${new Intl.NumberFormat("id-ID").format(Number(amount))} berhasil dicatat!` : `Income of Rp${new Intl.NumberFormat("id-ID").format(Number(amount))} successfully recorded!`)
-          : (language === 'id' ? `Pengeluaran Rp${new Intl.NumberFormat("id-ID").format(Number(amount))} berhasil dicatat!` : `Expense of Rp${new Intl.NumberFormat("id-ID").format(Number(amount))} successfully recorded!`)
+          ? (language === 'id' ? `Pemasukan ${formatCurrency(amountInIdr, language)} berhasil dicatat!` : `Income of ${formatCurrency(amountInIdr, language)} successfully recorded!`)
+          : (language === 'id' ? `Pengeluaran ${formatCurrency(amountInIdr, language)} berhasil dicatat!` : `Expense of ${formatCurrency(amountInIdr, language)} successfully recorded!`)
       )
     }
 
@@ -472,7 +478,7 @@ export function QuickEntryModal() {
                               >
                                 <span className="group-hover:translate-x-0.5 transition-transform duration-150">{goal.title}</span>
                                 <span className="text-[10px] text-muted-foreground transition-colors duration-150">
-                                  {language === 'id' ? 'Sisa Rp' : 'Remaining Rp'} {new Intl.NumberFormat("id-ID").format(remaining)}
+                                  {language === 'id' ? 'Sisa' : 'Remaining'} {formatCurrency(remaining, language)}
                                 </span>
                               </button>
                             )

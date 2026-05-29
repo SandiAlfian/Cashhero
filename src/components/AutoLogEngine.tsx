@@ -4,8 +4,6 @@ import React from 'react'
 import { useAutoLogStore } from '@/store/useAutoLogStore'
 import { useTransactionStore } from '@/store/useTransactionStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
-import { useLanguageStore } from '@/store/useLanguageStore'
-import { translations } from '@/store/useLanguageStore'
 
 // ─── Helper: Hitung jumlah eksekusi yang terlewat ─────────────────────────────
 function countMissedExecutions(
@@ -62,9 +60,12 @@ export function AutoLogEngine() {
   const updateLastExecuted = useAutoLogStore((s) => s.updateLastExecuted)
   const addTransaction = useTransactionStore((s) => s.addTransaction)
   const autoLogging = useSettingsStore((s) => s.autoLogging)
-  const { language } = useLanguageStore()
+  const fetchExchangeRates = useSettingsStore((s) => s.fetchExchangeRates)
 
   React.useEffect(() => {
+    // Ambil data kurs mata uang asing terupdate secara real-time
+    fetchExchangeRates()
+
     // Jika fitur auto logging dimatikan, berhenti
     if (!autoLogging) return
 
@@ -111,7 +112,6 @@ export function AutoLogEngine() {
 
     // Tampilkan Toast ringkasan jika ada yang dieksekusi
     if (totalExecuted > 0) {
-      const t = translations[language] ?? translations['id']
       // Toast will be shown by ToastProvider with updated style
     }
 
@@ -121,6 +121,7 @@ export function AutoLogEngine() {
         .register('/sw.js')
         .catch((err) => console.warn('[AutoLogEngine] SW registration failed:', err))
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Hanya dijalankan sekali saat mount (buka aplikasi)
 
   return null // Tidak merender apapun

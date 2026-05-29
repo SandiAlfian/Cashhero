@@ -2,7 +2,7 @@
 
 ## Project Information
 - **Name**: Cashhero
-- **Type**: Personal Finance Tracker Application
+- **Type**: Pahlawan Kelola Keuangan Pribadi
 - **Language**: TypeScript
 - **Framework**: Next.js 15 (App Router)
 

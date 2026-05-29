@@ -25,6 +25,8 @@ import {
   Lock,
   ArrowRight,
   Info,
+  TrendingUp,
+  Globe,
   ChevronDown
 } from "lucide-react"
 import { useLanguageStore, translations } from "@/store/useLanguageStore"
@@ -56,7 +58,7 @@ const localT = {
     securityPinToggleDesc: "Minta PIN saat pertama kali aplikasi dibuka.",
     pinRegistered: "PIN Terdaftar",
     changePin: "Ubah Kode PIN",
-    changePinDesc: "Ganti 4 digit kode akses keamanan Anda.",
+    changePinDesc: "Ganti 6 digit kode akses keamanan Anda.",
     biometricToggle: "Aktifkan Sidik Jari / Biometrik",
     biometricToggleDesc: "Gunakan sensor sidik jari perangkat untuk login.",
     biometricActive: "Biometrik Siap",
@@ -106,7 +108,7 @@ const localT = {
     securityPinToggleDesc: "Request PIN code when the application is launched.",
     pinRegistered: "PIN Registered",
     changePin: "Change PIN Code",
-    changePinDesc: "Replace your 4-digit security access code.",
+    changePinDesc: "Replace your 6-digit security access code.",
     biometricToggle: "Enable Fingerprint / Biometrics",
     biometricToggleDesc: "Use device fingerprint sensor to authenticate.",
     biometricActive: "Biometrics Ready",
@@ -148,6 +150,9 @@ export default function SettingsPage() {
   const autoLogging = useSettingsStore((state) => state.autoLogging)
   const securityPIN = useSettingsStore((state) => state.securityPIN)
   const biometricsRegistered = useSettingsStore((state) => state.biometricsRegistered)
+  const exchangeRates = useSettingsStore((state) => state.exchangeRates)
+  const ratesSource = useSettingsStore((state) => state.ratesSource)
+  const lastRatesUpdate = useSettingsStore((state) => state.lastRatesUpdate)
 
   // useSettingsStore setters
   const setProfile = useSettingsStore((state) => state.setProfile)
@@ -193,6 +198,56 @@ export default function SettingsPage() {
   const currencyDropdownRef = React.useRef<HTMLDivElement>(null)
   const filterDropdownRef = React.useRef<HTMLDivElement>(null)
 
+  // PWA manual installation prompt hooks
+  interface BeforeInstallPromptEvent extends Event {
+    readonly platforms: string[]
+    readonly userChoice: Promise<{
+      outcome: 'accepted' | 'dismissed'
+      platform: string
+    }>
+    prompt(): Promise<void>
+  }
+
+  const [pwaPrompt, setPwaPrompt] = React.useState<BeforeInstallPromptEvent | null>(null)
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handleBeforePrompt = (e: Event) => {
+      e.preventDefault()
+      setPwaPrompt(e as BeforeInstallPromptEvent)
+    }
+    window.addEventListener('beforeinstallprompt', handleBeforePrompt)
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforePrompt)
+  }, [])
+
+  const handleInstallPWA = async () => {
+    const isIOS = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase())
+    if (isIOS) {
+      alert(
+        "Untuk memasang Cashhero di iPhone/iPad Anda:\n\n" +
+        "1. Klik tombol 'Bagikan' (Share) di Safari.\n" +
+        "2. Pilih 'Tambahkan ke Layar Utama' (Add to Home Screen).\n" +
+        "3. Klik 'Tambah' (Add) di kanan atas."
+      )
+      return
+    }
+
+    if (!pwaPrompt) {
+      alert(
+        language === 'id'
+          ? "Aplikasi sudah terpasang atau browser Anda tidak mendukung instalasi otomatis secara langsung. Silakan cari menu 'Instal' di pojok kanan atas browser Anda."
+          : "Application is already installed or your browser does not support direct installation. Please look for the 'Install' option in your browser menu."
+      )
+      return
+    }
+
+    pwaPrompt.prompt()
+    const { outcome } = await pwaPrompt.userChoice
+    if (outcome === 'accepted') {
+      setPwaPrompt(null)
+    }
+  }
+
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (currencyDropdownRef.current && !currencyDropdownRef.current.contains(event.target as Node)) {
@@ -217,10 +272,10 @@ export default function SettingsPage() {
     setLocalAutoLogging(autoLogging)
   }, [username, email, currency, defaultHistoryFilter, autoLogging])
 
-  const t = (key: keyof typeof translations['id']) => {
+  const t = React.useCallback((key: keyof typeof translations['id']) => {
     if (!mounted) return translations['id'][key]
     return translations[language]?.[key] || translations['id'][key]
-  }
+  }, [mounted, language])
 
   const currencyOptions: { value: MainCurrency; label: string }[] = React.useMemo(() => [
     { value: "IDR", label: "IDR (Rupiah - Rp)" },
@@ -234,12 +289,12 @@ export default function SettingsPage() {
     { value: "daily" as const, label: t('daily') },
     { value: "weekly" as const, label: t('weekly') },
     { value: "monthly" as const, label: t('monthly') },
-  ], [mounted, language])
+  ], [t])
 
-  const lt = (key: keyof typeof localT['id']) => {
+  const lt = React.useCallback((key: keyof typeof localT['id']) => {
     if (!mounted) return localT['id'][key]
     return localT[language]?.[key] || localT['id'][key]
-  }
+  }, [mounted, language])
 
   // Trigger Toast Notification
   const triggerToast = (msg: string) => {
@@ -696,6 +751,53 @@ export default function SettingsPage() {
                     <Info className="w-3 h-3 shrink-0" />
                     {lt("currencyHelp")}
                   </p>
+
+                  {/* Premium visual exchange rates panel */}
+                  <div className="mt-3.5 p-3.5 rounded-xl bg-muted/10 border border-border/20 text-[11px] space-y-2.5 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="font-extrabold uppercase text-[9px] tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
+                        <TrendingUp className="w-3.5 h-3.5 text-primary animate-pulse" />
+                        {language === 'id' ? 'KURS AKTIF SAAT INI' : 'CURRENT ACTIVE RATES'}
+                      </div>
+                      <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full select-none ${
+                        ratesSource === 'api' 
+                          ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" 
+                          : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                      }`}>
+                        {ratesSource === 'api' 
+                          ? (language === 'id' ? 'Terupdate Real-Time (API)' : 'Live API Connected') 
+                          : (language === 'id' ? 'Mode Offline (Mei 2026)' : 'Offline Fallback')}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 font-bold text-foreground">
+                      <div className="flex justify-between border-b border-border/10 pb-1">
+                        <span className="text-muted-foreground">1 USD</span>
+                        <span>Rp {(exchangeRates?.USD || 17825).toLocaleString('id-ID')}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-border/10 pb-1">
+                        <span className="text-muted-foreground">1 EUR</span>
+                        <span>Rp {(exchangeRates?.EUR || 20650).toLocaleString('id-ID')}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-border/10 pb-1">
+                        <span className="text-muted-foreground">1 SGD</span>
+                        <span>Rp {(exchangeRates?.SGD || 13950).toLocaleString('id-ID')}</span>
+                      </div>
+                      <div className="flex justify-between border-b border-border/10 pb-1">
+                        <span className="text-muted-foreground">1 JPY</span>
+                        <span>Rp {(exchangeRates?.JPY || 112).toLocaleString('id-ID')}</span>
+                      </div>
+                    </div>
+                    
+                    {lastRatesUpdate && (
+                      <p className="text-[8px] text-muted-foreground/80 italic mt-1 flex items-center gap-1">
+                        <Globe className="w-2.5 h-2.5 shrink-0 text-primary" />
+                        {language === 'id' 
+                          ? `Pembaruan terakhir: ${new Date(lastRatesUpdate).toLocaleString('id-ID')}` 
+                          : `Last updated: ${new Date(lastRatesUpdate).toLocaleString('en-US')}`}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid gap-1.5 relative" ref={filterDropdownRef}>
@@ -957,7 +1059,7 @@ export default function SettingsPage() {
                             : "bg-muted/50 text-muted-foreground border-border/40 hover:bg-muted"
                         }`}
                       >
-                        {t === 'light' ? 'Light' : t === 'dark' ? 'Dark' : 'Sys'}
+                        {t === 'light' ? 'Light' : t === 'dark' ? 'Dark' : 'Sistem'}
                       </button>
                     ))}
                   </div>
@@ -984,6 +1086,31 @@ export default function SettingsPage() {
                     <p className="text-[9px] text-muted-foreground mt-0.5">
                       {language === 'id' ? 'Sentuh untuk ubah ke English' : 'Tap to change to Indonesian'}
                     </p>
+                  </div>
+                </div>
+
+                {/* PWA Manual Installer Card */}
+                <div 
+                  onClick={handleInstallPWA}
+                  className="col-span-1 sm:col-span-2 p-3.5 rounded-xl border border-border/30 bg-muted/10 hover:bg-muted/20 hover:border-primary/20 transition-all duration-200 cursor-pointer flex items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                      <Download className="w-4.5 h-4.5 text-primary" />
+                    </div>
+                    <div>
+                      <h5 className="text-xs font-bold text-foreground">
+                        {language === 'id' ? 'Pasang Aplikasi Cashhero (PWA)' : 'Install Cashhero App (PWA)'}
+                      </h5>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {language === 'id' 
+                          ? 'Akses cepat langsung dari layar utama dan dapat dibuka secara offline.' 
+                          : 'Quick access directly from your home screen and fully offline compatible.'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="bg-primary/15 text-primary text-[10px] font-bold uppercase px-3 py-1.5 rounded-lg border border-primary/20 shrink-0 select-none">
+                    {language === 'id' ? 'PASANG' : 'INSTALL'}
                   </div>
                 </div>
               </div>

@@ -19,11 +19,14 @@ import {
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { usePlanningStore } from "@/store/usePlanningStore"
 import { useLanguageStore, translations } from "@/store/useLanguageStore"
+import { useSettingsStore } from "@/store/useSettingsStore"
 import { formatCurrency, formatDate } from "@/lib/format"
 import { motion, AnimatePresence } from "framer-motion"
 
 export default function CalendarPage() {
   const { language } = useLanguageStore()
+  const activeCurrency = useSettingsStore((state) => state.currency)
+  const exchangeRates = useSettingsStore((state) => state.exchangeRates)
   const transactions = useTransactionStore((state) => state.transactions)
   const addTransaction = useTransactionStore((state) => state.addTransaction)
   const deleteTransaction = useTransactionStore((state) => state.deleteTransaction)
@@ -278,7 +281,8 @@ export default function CalendarPage() {
       return
     }
     setAmount(val)
-    setDisplayAmount(formatCurrency(Number(val), language))
+    const rate = exchangeRates[activeCurrency] || 1
+    setDisplayAmount(formatCurrency(Number(val) * rate, language))
   }
 
   // Handle Form Submission
@@ -291,18 +295,21 @@ export default function CalendarPage() {
     txDate.setHours(12, 0, 0, 0)
     const dateStr = txDate.toISOString()
 
+    const rate = exchangeRates[activeCurrency] || 1
+    const amountInIdr = Number(amount) * rate
+
     if (activeTab === 'saving') {
       if (!selectedGoalId) return
       const goal = goals.find((g) => g.id === selectedGoalId)
       if (!goal) return
 
-      // Update goal
-      updateGoal(goal.id, goal.title, goal.target, goal.collected + Number(amount), goal.iconName)
+      // Update goal (stored in IDR)
+      updateGoal(goal.id, goal.title, goal.target, goal.collected + amountInIdr, goal.iconName)
 
-      // Add transaction
+      // Add transaction (stored in IDR)
       addTransaction({
         type: deductCash ? 'out' : 'in',
-        amount: Number(amount),
+        amount: amountInIdr,
         category: 'Tabungan',
         note: note.trim(),
         date: dateStr
@@ -312,7 +319,7 @@ export default function CalendarPage() {
       if (!category) return
       addTransaction({
         type: activeTab,
-        amount: Number(amount),
+        amount: amountInIdr,
         category: category.trim(),
         note: note.trim(),
         date: dateStr
@@ -699,7 +706,7 @@ export default function CalendarPage() {
                 {/* Nominal Input (Rp) */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="calendarNominalInput" className="font-semibold text-[10px] uppercase tracking-wider text-muted-foreground/80">
-                    {t('amountLabel')}
+                    {t('amountLabel').replace('(Rp)', `(${activeCurrency})`)}
                   </label>
                   <div className="relative">
                     <Input

@@ -31,8 +31,7 @@ import {
   Edit2,
   Trash2,
   RefreshCw,
-  ChevronDown,
-  Calendar
+  ChevronDown
 } from "lucide-react"
 
 const container: Variants = {
@@ -249,15 +248,19 @@ export default function PlanningPage() {
   }
 
   const handleOpenEditBudget = (b: BudgetLimit) => {
+    const state = useSettingsStore.getState()
+    const rate = state.exchangeRates[state.currency] || 1
     setBudgetCategoryInput(b.category)
-    setBudgetLimitInput(new Intl.NumberFormat("id-ID").format(b.limit))
+    setBudgetLimitInput(new Intl.NumberFormat("id-ID").format(Math.round(b.limit / rate)))
     setEditingBudget(b)
     setIsAddingBudget(false)
     setBudgetOpen(true)
   }
 
   const handleSaveBudget = () => {
-    const limit = parseNum(budgetLimitInput)
+    const state = useSettingsStore.getState()
+    const rate = state.exchangeRates[state.currency] || 1
+    const limit = parseNum(budgetLimitInput) * rate
     if (!budgetCategoryInput.trim() || limit <= 0 || isBudgetCategoryDuplicate) return
 
     if (editingBudget) {
@@ -288,9 +291,11 @@ export default function PlanningPage() {
   }
 
   const handleOpenEditGoal = (g: SavingGoal) => {
+    const state = useSettingsStore.getState()
+    const rate = state.exchangeRates[state.currency] || 1
     setGoalTitleInput(g.title)
-    setGoalTargetInput(new Intl.NumberFormat("id-ID").format(g.target))
-    setGoalCollectedInput(new Intl.NumberFormat("id-ID").format(g.collected))
+    setGoalTargetInput(new Intl.NumberFormat("id-ID").format(Math.round(g.target / rate)))
+    setGoalCollectedInput(new Intl.NumberFormat("id-ID").format(Math.round(g.collected / rate)))
     setGoalIconInput(g.iconName)
     setEditingGoal(g)
     setIsAddingGoal(false)
@@ -299,8 +304,10 @@ export default function PlanningPage() {
   }
 
   const handleSaveGoal = () => {
-    const target = parseNum(goalTargetInput)
-    const collected = parseNum(goalCollectedInput)
+    const state = useSettingsStore.getState()
+    const rate = state.exchangeRates[state.currency] || 1
+    const target = parseNum(goalTargetInput) * rate
+    const collected = parseNum(goalCollectedInput) * rate
     if (!goalTitleInput.trim() || target <= 0) return
 
     if (editingGoal) {
@@ -318,7 +325,7 @@ export default function PlanningPage() {
           : `Saving goal "${goalTitleInput.trim()}" successfully created!`
       )
       
-      // Jika user memasukkan nominal awal tabungan, catat sebagai transaksi berkategori 'Tabungan' (tidak mempengaruhi saldo tunai)
+      // Jika user memasukkan nominal awal tabungan, catat sebagai transaksi berkategori 'Tabungan' (tidak mempengaruhi saldo tunai) (stored in IDR)
       if (collected > 0) {
         const noteTemplate = t('savingNoteTemplate')
         const note = noteTemplate
@@ -378,8 +385,10 @@ export default function PlanningPage() {
   }
 
   const handleOpenEditRule = (rule: AutoLogRule) => {
+    const state = useSettingsStore.getState()
+    const rate = state.exchangeRates[state.currency] || 1
     setRuleTitleInput(rule.title)
-    setRuleAmountInput(new Intl.NumberFormat("id-ID").format(rule.amount))
+    setRuleAmountInput(new Intl.NumberFormat("id-ID").format(Math.round(rule.amount / rate)))
     setRuleTypeInput(rule.type)
     setRuleCategoryInput(rule.category)
     setRuleNoteInput(rule.note)
@@ -391,7 +400,9 @@ export default function PlanningPage() {
   }
 
   const handleSaveRule = () => {
-    const amount = parseNum(ruleAmountInput)
+    const state = useSettingsStore.getState()
+    const rate = state.exchangeRates[state.currency] || 1
+    const amount = parseNum(ruleAmountInput) * rate
     if (!ruleTitleInput.trim() || amount <= 0 || !ruleCategoryInput.trim() || !ruleStartDateInput) return
 
     const startD = new Date(ruleStartDateInput)
@@ -400,7 +411,7 @@ export default function PlanningPage() {
 
     const ruleData = {
       title: ruleTitleInput.trim(),
-      amount,
+      amount, // stored in IDR
       type: ruleTypeInput,
       category: ruleCategoryInput.trim(),
       note: ruleNoteInput.trim(),
@@ -858,7 +869,7 @@ export default function PlanningPage() {
 
             {/* Budget Limit Amount */}
             <div className="grid gap-1.5">
-              <label className="font-semibold text-xs text-muted-foreground">{t('budgetAmount')}</label>
+              <label className="font-semibold text-xs text-muted-foreground">{t('budgetAmount').replace('(Rp)', `(${activeCurrency})`)}</label>
               <div className="relative flex items-center">
                 <span className="absolute left-3 text-xs text-muted-foreground/60 font-semibold select-none">
                   {
@@ -945,9 +956,19 @@ export default function PlanningPage() {
              {/* Target & Collected Inputs */}
              <div className="grid grid-cols-2 gap-4">
                <div className="grid gap-1.5">
-                 <label className="font-semibold text-xs text-muted-foreground">{t('goalTarget')}</label>
+                 <label className="font-semibold text-xs text-muted-foreground">{t('goalTarget').replace('(Rp)', `(${activeCurrency})`)}</label>
                  <div className="relative flex items-center">
-                   <span className="absolute left-3 text-xs text-muted-foreground/60 font-semibold select-none">Rp</span>
+                   <span className="absolute left-3 text-xs text-muted-foreground/60 font-semibold select-none">
+                     {
+                       {
+                         IDR: 'Rp',
+                         USD: '$',
+                         EUR: '€',
+                         SGD: 'S$',
+                         JPY: '¥'
+                       }[activeCurrency] || 'Rp'
+                     }
+                   </span>
                    <input 
                      value={goalTargetInput}
                      onChange={(e) => setGoalTargetInput(formatInputVal(e.target.value))}
@@ -957,9 +978,19 @@ export default function PlanningPage() {
                </div>
  
                <div className="grid gap-1.5">
-                 <label className="font-semibold text-xs text-muted-foreground">{t('goalCollected')}</label>
+                 <label className="font-semibold text-xs text-muted-foreground">{t('goalCollected').replace('(Rp)', `(${activeCurrency})`)}</label>
                  <div className="relative flex items-center">
-                   <span className="absolute left-3 text-xs text-muted-foreground/60 font-semibold select-none">Rp</span>
+                   <span className="absolute left-3 text-xs text-muted-foreground/60 font-semibold select-none">
+                     {
+                       {
+                         IDR: 'Rp',
+                         USD: '$',
+                         EUR: '€',
+                         SGD: 'S$',
+                         JPY: '¥'
+                       }[activeCurrency] || 'Rp'
+                     }
+                   </span>
                    <input 
                      value={goalCollectedInput}
                      onChange={(e) => setGoalCollectedInput(formatInputVal(e.target.value))}
@@ -1127,9 +1158,19 @@ export default function PlanningPage() {
 
               {/* Rule Amount */}
               <div className="grid gap-1.5">
-                <label className="font-semibold text-xs text-muted-foreground">{t('ruleAmount')}</label>
+                <label className="font-semibold text-xs text-muted-foreground">{t('ruleAmount').replace('(Rp)', `(${activeCurrency})`)}</label>
                 <div className="relative flex items-center">
-                  <span className="absolute left-3 text-xs text-muted-foreground/60 font-semibold select-none">Rp</span>
+                  <span className="absolute left-3 text-xs text-muted-foreground/60 font-semibold select-none">
+                    {
+                      {
+                        IDR: 'Rp',
+                        USD: '$',
+                        EUR: '€',
+                        SGD: 'S$',
+                        JPY: '¥'
+                      }[activeCurrency] || 'Rp'
+                    }
+                  </span>
                   <input 
                     value={ruleAmountInput}
                     onChange={(e) => setRuleAmountInput(formatInputVal(e.target.value))}

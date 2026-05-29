@@ -9,8 +9,9 @@ export const formatCurrency = (amount: number, lang: Language): string => {
   const absoluteAmount = Math.abs(amount)
   
   // Read dynamically from store state (reactive & non-reactive safe)
-  const currency = typeof window !== 'undefined' ? (useSettingsStore.getState().currency || 'IDR') : 'IDR'
-  const rate = EXCHANGE_RATES[currency] || 1
+  const state = typeof window !== 'undefined' ? useSettingsStore.getState() : null
+  const currency = state?.currency || 'IDR'
+  const rate = state?.exchangeRates?.[currency] || EXCHANGE_RATES[currency] || 1
   const convertedAmount = absoluteAmount / rate
 
   // Determine decimal places for foreign currencies (2 decimal places if there are cents)
