@@ -511,8 +511,8 @@ export default function SettingsPage() {
         console.error("WebAuthn Registration Error:", err)
         triggerToast(
           language === 'id' 
-            ? `Pendaftaran biometrik gagal: ${(err as Error).message || 'Dibatalkan atau perangkat tidak mendukung'}`
-            : `Biometric registration failed: ${(err as Error).message || 'Canceled or unsupported device'}`
+            ? "Pendaftaran biometrik gagal."
+            : "Biometric registration failed."
         )
         return
       }
