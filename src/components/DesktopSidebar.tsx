@@ -86,7 +86,7 @@ export function DesktopSidebar() {
 
   if (!mounted) {
     return (
-      <aside className="hidden md:flex w-66 shrink-0 bg-sidebar flex-col p-6 border-r border-sidebar-border relative z-10">
+      <aside className="hidden md:flex w-64 shrink-0 bg-sidebar flex-col p-6 border-r border-sidebar-border relative z-10">
         {fontStyle}
         {/* Clean, dedicated brand header */}
         <div className="flex items-center gap-2.5 mb-8 pb-4 border-b border-sidebar-border/50">
@@ -98,7 +98,7 @@ export function DesktopSidebar() {
         </div>
         
         {/* Navigation Area */}
-        <div className="flex-1 w-full overflow-hidden">
+        <div className="flex-1 w-full overflow-visible">
           <SidebarNav />
         </div>
         
@@ -113,7 +113,7 @@ export function DesktopSidebar() {
   return (
     <aside
       className={`hidden md:flex shrink-0 bg-sidebar flex-col border-r border-sidebar-border relative z-10 transition-all duration-300 ease-in-out ${
-        isSidebarCollapsed ? "w-20 p-4 items-center" : "w-66 p-6"
+        isSidebarCollapsed ? "w-20 p-4 items-center" : "w-64 p-6"
       }`}
     >
       {fontStyle}
@@ -138,7 +138,7 @@ export function DesktopSidebar() {
       </div>
 
       {/* 2. NAVIGATION MAIN AREA */}
-      <div className="flex-1 w-full overflow-hidden">
+      <div className="flex-1 w-full overflow-visible">
         <SidebarNav isCollapsed={isSidebarCollapsed} />
       </div>
 
