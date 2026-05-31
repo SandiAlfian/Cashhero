@@ -180,10 +180,12 @@ export default function SettingsPage() {
   const isNotificationEnabled = useSettingsStore((state) => state.isNotificationEnabled)
   const setNotificationEnabled = useSettingsStore((state) => state.setNotificationEnabled)
   const resetAllData = useSettingsStore((state) => state.resetAllData)
+  const fetchExchangeRates = useSettingsStore((state) => state.fetchExchangeRates)
 
   const [mounted, setMounted] = React.useState(false)
   const [showToast, setShowToast] = React.useState(false)
   const [toastMessage, setToastMessage] = React.useState("")
+  const [isSyncingRates, setIsSyncingRates] = React.useState(false)
 
   // Profile Edit State
   const [isEditingProfile, setIsEditingProfile] = React.useState(false)
@@ -346,6 +348,10 @@ export default function SettingsPage() {
     setLocalAutoLogging(autoLogging)
   }, [username, email, currency, defaultHistoryFilter, autoLogging])
 
+  React.useEffect(() => {
+    fetchExchangeRates()
+  }, [fetchExchangeRates])
+
   const t = React.useCallback((key: keyof typeof translations['id']) => {
     if (!mounted) return translations['id'][key]
     return translations[language]?.[key] || translations['id'][key]
@@ -375,6 +381,24 @@ export default function SettingsPage() {
     setToastMessage(msg)
     setShowToast(true)
     setTimeout(() => setShowToast(false), 3500)
+  }
+
+  // Handle manual sync of foreign exchange rates
+  const handleSyncExchangeRates = async () => {
+    setIsSyncingRates(true)
+    try {
+      await fetchExchangeRates()
+      const currentSource = useSettingsStore.getState().ratesSource
+      if (currentSource === 'api') {
+        triggerToast(language === 'id' ? "Kurs berhasil diperbarui dari API!" : "Rates successfully updated from API!")
+      } else {
+        triggerToast(language === 'id' ? "Gagal memuat kurs dari API. Menggunakan mode offline." : "Failed to load rates from API. Using offline mode.")
+      }
+    } catch {
+      triggerToast(language === 'id' ? "Gagal memperbarui kurs." : "Failed to update rates.")
+    } finally {
+      setIsSyncingRates(false)
+    }
   }
 
   // Handle Profile Update
@@ -850,14 +874,41 @@ export default function SettingsPage() {
                         <TrendingUp className="w-3.5 h-3.5 text-primary animate-pulse" />
                         {language === 'id' ? 'KURS AKTIF SAAT INI' : 'CURRENT ACTIVE RATES'}
                       </div>
-                      <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full select-none ${ratesSource === 'api'
-                        ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
-                        : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                        }`}>
-                        {ratesSource === 'api'
-                          ? (language === 'id' ? 'Terupdate Real-Time' : 'Live API Connected')
-                          : (language === 'id' ? 'Mode Offline (Mei 2026)' : 'Offline Fallback')}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={handleSyncExchangeRates}
+                          disabled={isSyncingRates}
+                          className="p-1 rounded-md hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-all duration-200 cursor-pointer active:scale-95 disabled:opacity-50 flex items-center justify-center shrink-0"
+                          title={language === 'id' ? "Perbarui Kurs" : "Refresh Rates"}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className={`w-3.5 h-3.5 ${isSyncingRates ? 'animate-spin text-primary' : ''}`}
+                          >
+                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                            <path d="M3 3v5h5" />
+                            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                            <path d="M16 16h5v5" />
+                          </svg>
+                        </button>
+                        <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full select-none ${ratesSource === 'api'
+                          ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                          }`}>
+                          {ratesSource === 'api'
+                            ? (language === 'id' ? 'Terupdate Real-Time' : 'Live API Connected')
+                            : (language === 'id' ? 'Mode Offline (Mei 2026)' : 'Offline Fallback')}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 font-bold text-foreground">

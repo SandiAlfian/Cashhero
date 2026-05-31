@@ -84,7 +84,7 @@ export const useSettingsStore = create<SettingsState>()(
       setNotificationEnabled: (isNotificationEnabled) => set({ isNotificationEnabled }),
       fetchExchangeRates: async () => {
         try {
-          const res = await fetch('https://open.er-api.com/v6/latest/IDR')
+          const res = await fetch('https://open.er-api.com/v6/latest/IDR', { cache: 'no-store' })
           if (!res.ok) throw new Error('API request failed')
           const data = await res.json()
           if (data && data.result === 'success' && data.rates) {

@@ -24,8 +24,9 @@ self.addEventListener('activate', (event) => {
 
 // ── Fetch (Stale-While-Revalidate for static assets) ──────────────────────────
 self.addEventListener('fetch', (event) => {
-  // Hanya cache GET request untuk asset statis
+  // Hanya cache GET request dari origin yang sama untuk menghindari caching API eksternal
   if (event.request.method !== 'GET') return
+  if (!event.request.url.startsWith(self.location.origin)) return
   if (event.request.url.includes('/api/')) return
 
   event.respondWith(
