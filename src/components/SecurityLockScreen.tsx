@@ -178,13 +178,13 @@ export function SecurityLockScreen() {
   React.useEffect(() => {
     setMounted(true)
     
-    // Always trigger setup confirm on initial load if security is not set up
-    if (!hasSetupSecurity && !hasPromptedSetup.current) {
+    // Always trigger setup confirm on initial load if security is not set up and no biometrics is registered
+    if (!hasSetupSecurity && !biometricsRegistered && !hasPromptedSetup.current) {
       hasPromptedSetup.current = true
       setShowSetupConfirm(true)
       setForceShowSetup(true)
     }
-  }, [hasSetupSecurity])
+  }, [hasSetupSecurity, biometricsRegistered])
 
   React.useEffect(() => {
     if (isUnlocked || justCompletedSetup.current) {

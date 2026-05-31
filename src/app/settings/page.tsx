@@ -181,6 +181,7 @@ export default function SettingsPage() {
   const setNotificationEnabled = useSettingsStore((state) => state.setNotificationEnabled)
   const resetAllData = useSettingsStore((state) => state.resetAllData)
   const fetchExchangeRates = useSettingsStore((state) => state.fetchExchangeRates)
+  const setHasSetupSecurity = useSettingsStore((state) => state.setHasSetupSecurity)
 
   const [mounted, setMounted] = React.useState(false)
   const [showToast, setShowToast] = React.useState(false)
@@ -531,6 +532,7 @@ export default function SettingsPage() {
           setBiometricsRegistered(true)
           setIsBiometricsSimulated(false)
           setBiometricCredentialId(credIdBase64)
+          setHasSetupSecurity(true)
           triggerToast(lt("biometricRegisterSuccess"))
         }
         return // Successfully handled or canceled natively without needing simulation
@@ -549,6 +551,7 @@ export default function SettingsPage() {
     setBiometricsRegistered(true)
     setIsBiometricsSimulated(true)
     setBiometricCredentialId("")
+    setHasSetupSecurity(true)
     triggerToast(
       language === 'id'
         ? "Mode Simulasi Biometrik diaktifkan karena browser/koneksi tidak mendukung WebAuthn."
