@@ -35,6 +35,7 @@ export function SecurityLockScreen() {
   const [completelyRemoved, setCompletelyRemoved] = React.useState(false)
   const [showSetupConfirm, setShowSetupConfirm] = React.useState(false)
   const [forceShowSetup, setForceShowSetup] = React.useState(false)
+  const justCompletedSetup = React.useRef(false)
 
   // Custom Biometric Simulator states
   const [showSimulatedScan, setShowSimulatedScan] = React.useState(false)
@@ -186,14 +187,17 @@ export function SecurityLockScreen() {
   }, [hasSetupSecurity])
 
   React.useEffect(() => {
-    if (securityPIN && hasSetupSecurity && biometricsRegistered) {
+    if (isUnlocked || justCompletedSetup.current) {
+      return
+    }
+    if (hasSetupSecurity && biometricsRegistered) {
       // Trigger biometrics scan instantly on load for banking experience
       const timer = setTimeout(() => {
         handleBiometricAuth()
       }, 800)
       return () => clearTimeout(timer)
     }
-  }, [securityPIN, hasSetupSecurity, biometricsRegistered, handleBiometricAuth])
+  }, [hasSetupSecurity, biometricsRegistered, isUnlocked, handleBiometricAuth])
 
   // Process PIN inputs
   const handleNumClick = async (num: string) => {
@@ -244,6 +248,7 @@ export function SecurityLockScreen() {
               }
             }
             
+            justCompletedSetup.current = true
             setHasSetupSecurity(true)
             setTimeout(() => {
               setIsUnlocked(true)
@@ -287,7 +292,7 @@ export function SecurityLockScreen() {
   }
 
   if (!mounted || completelyRemoved) return null
-  if (!securityPIN && !forceShowSetup) return null
+  if (!securityPIN && !biometricsRegistered && !forceShowSetup) return null
 
   return (
     <>
