@@ -34,6 +34,7 @@ import { useLanguageStore, translations } from "@/store/useLanguageStore"
 import { useSettingsStore, MainCurrency } from "@/store/useSettingsStore"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTheme } from "next-themes"
+import { usePushNotifications } from "@/hooks/usePushNotifications"
 
 // Local dictionary for settings-specific strings
 const localT = {
@@ -182,6 +183,14 @@ export default function SettingsPage() {
   const resetAllData = useSettingsStore((state) => state.resetAllData)
   const fetchExchangeRates = useSettingsStore((state) => state.fetchExchangeRates)
   const setHasSetupSecurity = useSettingsStore((state) => state.setHasSetupSecurity)
+
+  const {
+    isBackgroundPushEnabled,
+    loading: isPushLoading,
+    error: pushError,
+    registerPush,
+    unregisterPush,
+  } = usePushNotifications()
 
   const [mounted, setMounted] = React.useState(false)
   const [showToast, setShowToast] = React.useState(false)
@@ -539,7 +548,7 @@ export default function SettingsPage() {
       } catch (err: unknown) {
         console.error("WebAuthn Registration Error:", err)
         triggerToast(
-          language === 'id' 
+          language === 'id'
             ? "Pendaftaran biometrik gagal."
             : "Biometric registration failed."
         )
@@ -1228,48 +1237,141 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Smart Notification Reminder Card */}
-                <div className="col-span-1 sm:col-span-2 flex items-center justify-between p-3 rounded-xl border border-border/20 bg-muted/10">
-                  <div className="space-y-0.5 pr-2">
-                    <h5 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                      <Bell className="w-3.5 h-3.5 text-blue-500" />
-                      {language === 'id' ? 'Pengingat Pintar (Notifikasi)' : 'Smart Reminders (Push)'}
-                    </h5>
-                    <p className="text-[10px] text-muted-foreground leading-normal max-w-[85%]">
-                      {language === 'id' 
-                        ? 'Dapatkan pengingat untuk transaksi berulang dan perbarui portofolio Anda via notifikasi push lokal.' 
-                        : 'Get reminders for recurring transactions and portfolio updates via local push notifications.'}
-                    </p>
-                  </div>
-                  <div
-                    onClick={async () => {
-                      const currentState = useSettingsStore.getState().isNotificationEnabled
-                      if (!currentState) {
-                        if (typeof window !== 'undefined' && 'Notification' in window) {
-                          const permission = await Notification.requestPermission()
-                          if (permission === 'granted') {
-                            setNotificationEnabled(true)
-                            triggerToast(language === 'id' ? 'Notifikasi pengingat pintar diaktifkan!' : 'Smart reminders enabled!')
+                {/* Unified Smart App Notifications Card */}
+                <div className="col-span-1 sm:col-span-2 p-4 rounded-xl border border-border/20 bg-muted/10 flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5 pr-2 font-semibold">
+                      <h5 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Bell className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
+                        {language === 'id' ? 'Notifikasi Pengingat Pintar' : 'Smart Reminder Notifications'}
+                      </h5>
+                      <p className="text-[10px] text-muted-foreground leading-normal max-w-[85%] font-medium">
+                        {language === 'id'
+                          ? 'Aktifkan peringatan otomatis secara real-time ke perangkat Anda.'
+                          : 'Enable real-time automatic reminders to your device.'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      {/* Direct Minimalist Test Notification Button (ONLY shown when switch is ON) */}
+                      {(isNotificationEnabled || isBackgroundPushEnabled) && (
+                        <button
+                          type="button"
+                          title={language === 'id' ? 'Kirim Notifikasi Uji Coba' : 'Send Test Notification'}
+                          onClick={() => {
+                            if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
+
+                            triggerToast(
+                              language === 'id'
+                                ? "Memproses notifikasi uji coba... Silakan kunci layar perangkat atau minimalkan aplikasi dalam 5 detik."
+                                : "Processing test notification... Please lock your screen or minimize the app within 5 seconds."
+                            )
+
+                            setTimeout(() => {
+                              navigator.serviceWorker.ready.then((registration) => {
+                                registration.active?.postMessage({
+                                  type: 'SHOW_LOCAL_NOTIFICATION',
+                                  payload: {
+                                    title: language === 'id' ? 'Uji Coba Notifikasi Cashhero 🔔' : 'Cashhero Test Notification 🔔',
+                                    options: {
+                                      body: language === 'id'
+                                        ? 'Sistem notifikasi pengingat finansial Cashhero aktif dan berjalan dengan lancar!'
+                                        : 'Cashhero financial reminder notification system is active and running smoothly!',
+                                      vibrate: [200, 100, 200]
+                                    }
+                                  }
+                                })
+                              })
+                            }, 5000)
+                          }}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 hover:text-blue-600 transition-all border border-blue-500/20 active:scale-90 cursor-pointer shadow-sm relative group shrink-0"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 transition-transform group-hover:rotate-12">
+                            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                          </svg>
+
+                          {/* Pulsing indicator dot */}
+                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-500 rounded-full animate-ping" />
+                          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-500 rounded-full" />
+                        </button>
+                      )}
+
+                      {/* Unified Toggle Switch */}
+                      <div
+                        onClick={async () => {
+                          if (isPushLoading) return
+
+                          const isCurrentlyEnabled = isNotificationEnabled || isBackgroundPushEnabled
+
+                          if (!isCurrentlyEnabled) {
+                            // Enabling Notifications:
+                            if (typeof window !== 'undefined' && 'Notification' in window) {
+                              const permission = await Notification.requestPermission()
+                              if (permission === 'granted') {
+                                // 1. Enable local reminder settings
+                                setNotificationEnabled(true)
+                                // 2. Automatically register FCM background push
+                                const token = await registerPush()
+
+                                if (token) {
+                                  triggerToast(
+                                    language === 'id'
+                                      ? 'Notifikasi pengingat pintar berhasil diaktifkan!'
+                                      : 'Smart reminder notifications successfully enabled!'
+                                  )
+                                } else {
+                                  triggerToast(
+                                    language === 'id'
+                                      ? 'Notifikasi diaktifkan (Mode lokal saja, gagal mendaftarkan push latar belakang).'
+                                      : 'Notifications enabled (Local mode only, failed to register background push).'
+                                  )
+                                }
+                              } else {
+                                triggerToast(
+                                  language === 'id'
+                                    ? 'Izin notifikasi ditolak oleh browser.'
+                                    : 'Notification permission denied by browser.'
+                                )
+                              }
+                            } else {
+                              triggerToast(
+                                language === 'id'
+                                  ? 'Browser Anda tidak mendukung notifikasi push.'
+                                  : 'Your browser does not support push notifications.'
+                              )
+                            }
                           } else {
-                            triggerToast(language === 'id' ? 'Izin notifikasi ditolak oleh peramban.' : 'Notification permission denied by browser.')
+                            // Disabling Notifications:
+                            setNotificationEnabled(false)
+                            await unregisterPush()
+                            triggerToast(
+                              language === 'id'
+                                ? 'Notifikasi pengingat pintar dinonaktifkan.'
+                                : 'Smart reminder notifications disabled.'
+                            )
                           }
-                        } else {
-                          triggerToast(language === 'id' ? 'Peramban Anda tidak mendukung notifikasi push.' : 'Your browser does not support push notifications.')
-                        }
-                      } else {
-                        setNotificationEnabled(false)
-                      }
-                    }}
-                    className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors duration-200 flex items-center shrink-0 ${isNotificationEnabled ? "bg-blue-500" : "bg-muted-foreground/30"
-                      }`}
-                  >
-                    <motion.div
-                      layout
-                      className="w-4 h-4 bg-white rounded-full shadow-md"
-                      animate={{ x: isNotificationEnabled ? 16 : 0 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
+                        }}
+                        className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors duration-200 flex items-center shrink-0 ${(isNotificationEnabled || isBackgroundPushEnabled) ? "bg-blue-500" : "bg-muted-foreground/30"
+                          } ${isPushLoading ? "opacity-50 pointer-events-none" : ""}`}
+                      >
+                        <motion.div
+                          layout
+                          className="w-4 h-4 bg-white rounded-full shadow-md"
+                          animate={{ x: (isNotificationEnabled || isBackgroundPushEnabled) ? 16 : 0 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        />
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Error display if push registration fails */}
+                  {pushError && (
+                    <div className="p-2.5 rounded-lg border border-red-500/20 bg-red-500/5 text-[10px] font-semibold text-red-500 flex items-center gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                      <span>{pushError}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* PWA Manual Installer Card */}
@@ -1287,7 +1389,7 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <h5 className="text-xs font-bold text-foreground">
-                        {language === 'id' ? 'Pasang Aplikasi Cashhero (PWA)' : 'Install Cashhero App (PWA)'}
+                        {language === 'id' ? 'Pasang Aplikasi Cashhero' : 'Install Cashhero App'}
                       </h5>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
                         {isAlreadyInstalled

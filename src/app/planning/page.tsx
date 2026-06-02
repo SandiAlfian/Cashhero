@@ -489,20 +489,11 @@ export default function PlanningPage() {
                   return (
                     <div 
                       key={b.id} 
-                      className="group relative p-3 rounded-xl border border-border/60 hover:border-primary/30 transition-all hover:bg-muted/10"
+                      className="p-3 rounded-xl border border-border/60 hover:border-primary/30 transition-all hover:bg-muted/10"
                     >
-                      {/* Edit Button floating */}
-                      <button
-                        onClick={() => handleOpenEditBudget(b)}
-                        className="absolute right-3 top-3 p-1.5 bg-muted/60 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer duration-200"
-                        title={t('editBudget')}
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-
-                      <div className="space-y-2 pr-6">
+                      <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="font-bold text-foreground text-xs flex items-center gap-1.5 flex-wrap pr-4">
+                          <span className="font-bold text-foreground text-xs flex items-center gap-1.5 flex-wrap">
                             {b.category}
                             {isCritical && (
                               <span className="text-[9px] font-bold text-primary bg-primary/10 dark:bg-primary/20 px-1.5 py-0.5 rounded border border-primary/20 flex items-center gap-0.5 animate-pulse">
@@ -511,9 +502,18 @@ export default function PlanningPage() {
                               </span>
                             )}
                           </span>
-                          <span className={`text-xs font-bold shrink-0 ${isCritical ? 'text-primary' : 'text-muted-foreground'}`}>
-                            {percentage}%
-                          </span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() => handleOpenEditBudget(b)}
+                              className="p-1 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded transition-colors cursor-pointer"
+                              title={t('editBudget')}
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <span className={`text-xs font-bold ${isCritical ? 'text-primary' : 'text-muted-foreground'}`}>
+                              {percentage}%
+                            </span>
+                          </div>
                         </div>
 
                         {/* Progress Bar */}
@@ -713,10 +713,10 @@ export default function PlanningPage() {
                 {rules.map((rule) => (
                   <div 
                     key={rule.id}
-                    className="p-3.5 rounded-xl border border-border/60 hover:border-primary/30 transition-all hover:bg-muted/10 flex flex-col gap-2.5 relative group"
+                    className="p-3.5 rounded-xl border border-border/60 hover:border-primary/30 transition-all hover:bg-muted/10 flex flex-col gap-2.5"
                   >
                     {/* Top row: Title, Type Badge, and edit button */}
-                    <div className="flex items-center justify-between pr-8">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className={`text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded ${
                           rule.type === 'in' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary'
@@ -726,7 +726,15 @@ export default function PlanningPage() {
                         <span className="font-bold text-foreground text-xs truncate">{rule.title}</span>
                       </div>
                       
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        <button
+                          onClick={() => handleOpenEditRule(rule)}
+                          className="p-1 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded transition-colors cursor-pointer"
+                          title={t('editRule')}
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+
                         {/* Active / Inactive switch */}
                         <button
                           onClick={() => {
@@ -769,15 +777,6 @@ export default function PlanningPage() {
                         </div>
                       )}
                     </div>
-
-                    {/* Edit Button floating */}
-                    <button
-                      onClick={() => handleOpenEditRule(rule)}
-                      className="absolute right-3 top-3.5 p-1.5 bg-muted/60 hover:bg-primary/10 text-muted-foreground hover:text-primary rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer duration-200"
-                      title={t('editRule')}
-                    >
-                      <Edit2 className="w-3 h-3" />
-                    </button>
                   </div>
                 ))}
               </div>

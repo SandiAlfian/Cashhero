@@ -13,6 +13,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.3.0",
+    "firebase": "^12.14.0",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.16.0",
     "next": "15.5.18",
@@ -36,5 +37,11 @@
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@firebase/util",
+      "protobufjs"
+    ]
   }
 }

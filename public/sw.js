@@ -1,5 +1,34 @@
 // Cashhero Service Worker
-// Handles background sync and future push notification support
+// Handles background sync and Firebase FCM background push notification support
+
+// ── Firebase Cloud Messaging Integration ──────────────────────────────────────
+importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyBTBuTd-ddbCjebkhcXlwhi8wBD5A9IX4Q",
+  authDomain: "cashhero-1ccbc.firebaseapp.com",
+  projectId: "cashhero-1ccbc",
+  storageBucket: "cashhero-1ccbc.firebasestorage.app",
+  messagingSenderId: "274124067625",
+  appId: "1:274124067625:web:5b043631a016f5c672dd38"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  console.log('[sw.js] Received background message ', payload);
+  const notificationTitle = payload.notification?.title || 'Cashhero';
+  const notificationOptions = {
+    body: payload.notification?.body || 'Ada notifikasi baru dari Cashhero.',
+    icon: '/cashhero-logo-192.png',
+    badge: '/cashhero-logo-192.png',
+    data: payload.data,
+    vibrate: [200, 100, 200]
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
 
 const CACHE_NAME = 'cashhero-v1'
 

@@ -17,6 +17,8 @@ export interface SettingsState {
   biometricCredentialId?: string
   isBiometricsSimulated?: boolean
   isNotificationEnabled: boolean
+  isBackgroundPushEnabled: boolean
+  fcmToken: string
   exchangeRates: Record<MainCurrency, number>
   lastRatesUpdate: string
   ratesSource: 'api' | 'offline'
@@ -32,6 +34,8 @@ export interface SettingsState {
   toggleSidebar: () => void
   setHasSetupSecurity: (setup: boolean) => void
   setNotificationEnabled: (enabled: boolean) => void
+  setBackgroundPushEnabled: (enabled: boolean) => void
+  setFcmToken: (token: string) => void
   fetchExchangeRates: () => Promise<void>
   resetAllData: () => void
 }
@@ -61,6 +65,8 @@ export const useSettingsStore = create<SettingsState>()(
       biometricCredentialId: '',
       isBiometricsSimulated: false,
       isNotificationEnabled: false,
+      isBackgroundPushEnabled: false,
+      fcmToken: '',
       exchangeRates: {
         IDR: 1,
         USD: 17825,
@@ -82,6 +88,8 @@ export const useSettingsStore = create<SettingsState>()(
       toggleSidebar: () => set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
       setHasSetupSecurity: (hasSetupSecurity) => set({ hasSetupSecurity }),
       setNotificationEnabled: (isNotificationEnabled) => set({ isNotificationEnabled }),
+      setBackgroundPushEnabled: (isBackgroundPushEnabled: boolean) => set({ isBackgroundPushEnabled }),
+      setFcmToken: (fcmToken: string) => set({ fcmToken }),
       fetchExchangeRates: async () => {
         try {
           const res = await fetch('https://open.er-api.com/v6/latest/IDR', { cache: 'no-store' })
