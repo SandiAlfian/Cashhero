@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { initializeApp } from "firebase/app"
-import { getMessaging, getToken, deleteToken } from "firebase/messaging"
+import { initializeApp, getApps } from "firebase/app"
+import { getMessaging, getToken, deleteToken, onMessage } from "firebase/messaging"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { useLanguageStore } from "@/store/useLanguageStore"
+import { playCoinSound } from "@/lib/coinSound"
 
 const firebaseConfig = {
   apiKey: "AIzaSyBTBuTd-ddbCjebkhcXlwhi8wBD5A9IX4Q",
@@ -38,6 +39,16 @@ export function usePushNotifications() {
       setIsSupported(supported)
     }
     checkSupport()
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      if (getApps().length === 0) initializeApp(firebaseConfig)
+      const messaging = getMessaging()
+      const unsubscribe = onMessage(messaging, () => playCoinSound())
+      return unsubscribe
+    } catch { /* skip if messaging not available */ }
   }, [])
 
   const registerPush = async () => {
