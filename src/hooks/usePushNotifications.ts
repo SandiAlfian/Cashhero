@@ -104,15 +104,19 @@ export function usePushNotifications() {
       console.error("FCM Registration Error:", err)
       const errorMsg = err instanceof Error ? err.message : String(err)
       
-      let friendlyMsg = errorMsg
+      let friendlyMsg
       if (errorMsg.includes("applicationServerKey") || errorMsg.includes("VAPID") || errorMsg.includes("applicationServerKey is not valid")) {
         friendlyMsg = language === "id"
-          ? "Kunci server notifikasi (VAPID Key) tidak valid. Kunci Publik (Public Key) resmi dari Firebase biasanya sepanjang 87 karakter. Harap periksa kembali dan pastikan Anda menyalin Kunci Publik secara lengkap dari Firebase Console."
-          : "The notification server key (VAPID Key) is invalid. A standard Firebase Public Key is exactly 87 characters long. Please check and make sure you copied the full Public Key from your Firebase Console."
+          ? "Kunci server notifikasi (VAPID Key) tidak valid. Buka Firebase Console → Project Settings → Cloud Messaging → Web Push certificates, salin Key Pair ke usePushNotifications.ts baris 18."
+          : "VAPID Key invalid. Go to Firebase Console → Project Settings → Cloud Messaging → Web Push certificates, copy the Key Pair into usePushNotifications.ts line 18."
+      } else if (errorMsg.includes("messaging/unsupported-browser") || errorMsg.includes("unable to subscribe")) {
+        friendlyMsg = language === "id"
+          ? "Browser ini tidak mendukung push subscription. Coba Chrome atau Edge terbaru."
+          : "This browser doesn't support push subscription. Try latest Chrome or Edge."
       } else {
         friendlyMsg = language === "id"
-          ? `Gagal mengaktifkan notifikasi latar belakang: ${errorMsg}`
-          : `Failed to enable background notifications: ${errorMsg}`
+          ? `Gagal mendaftarkan notifikasi: ${errorMsg}`
+          : `Failed to register notifications: ${errorMsg}`
       }
 
       setError(friendlyMsg)

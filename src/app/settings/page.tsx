@@ -1336,12 +1336,12 @@ export default function SettingsPage() {
                             if (typeof window !== 'undefined' && 'Notification' in window) {
                               const permission = await Notification.requestPermission()
                               if (permission === 'granted') {
-                                // 1. Enable local reminder settings
-                                setNotificationEnabled(true)
-                                // 2. Automatically register FCM background push
+                                // 1. Register FCM background push first
                                 const token = await registerPush()
 
                                 if (token) {
+                                  // 2. Only mark as enabled if FCM registration succeeds
+                                  setNotificationEnabled(true)
                                   triggerToast(
                                     language === 'id'
                                       ? 'Notifikasi pengingat pintar berhasil diaktifkan!'
@@ -1350,8 +1350,8 @@ export default function SettingsPage() {
                                 } else {
                                   triggerToast(
                                     language === 'id'
-                                      ? 'Notifikasi diaktifkan (Mode lokal saja, gagal mendaftarkan push latar belakang).'
-                                      : 'Notifications enabled (Local mode only, failed to register background push).'
+                                      ? `Gagal mendaftarkan notifikasi: ${pushError || 'Silakan cek console browser (F12) untuk detail.'}`
+                                      : `Failed to register notifications: ${pushError || 'Check browser console (F12) for details.'}`
                                   )
                                 }
                               } else {

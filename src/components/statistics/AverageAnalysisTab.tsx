@@ -589,7 +589,7 @@ export default function AverageAnalysisTab({ filter, filteredTransactions, start
     const dayCount = Math.max(1, daysInPeriod)
     const periodFactor = dayCount / 30
     const avgTxValue = totalTxCount > 0 ? totalAbsAmount / totalTxCount : 0
-    const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0
+    const savingsRate = totalIncome > 0 ? Math.max(0, ((totalIncome - totalExpense) / totalIncome) * 100) : 0
 
     // Category data: period-proportional budget vs actual
     const allExpenseCategories = Array.from(expenseByCategory.keys())

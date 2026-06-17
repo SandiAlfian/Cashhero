@@ -12,7 +12,10 @@ export async function GET() {
     }
 
     const tokens = readTokens()
-    if (tokens.length === 0) return NextResponse.json({ error: 'no registered tokens' }, { status: 400 })
+    if (tokens.length === 0) return NextResponse.json({
+      error: 'no registered tokens',
+      hint: 'Buka halaman Settings → aktifkan notifikasi. Jika gagal, periksa VAPID key di Firebase Console → Project Settings → Cloud Messaging → Web Push certificates. Pastikan key pair cocok dengan yang ada di usePushNotifications.ts.'
+    }, { status: 400 })
 
     // Send test notification to the most recently registered token
     const latest = tokens.reduce((a, b) => a.updatedAt > b.updatedAt ? a : b)

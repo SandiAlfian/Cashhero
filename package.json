@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node -e \"try { fs.rmSync('.next/cache', { recursive: true, force: true }) } catch(e) {}\" && next dev",
-    "build": "node -e \"fs.rmSync('.next', { recursive: true, force: true })\" && next build",
+    "dev": "next dev --turbo",
+    "dev:clean": "node -e \"fs.rmSync('.next', { recursive: true, force: true })\" && next dev --turbo",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
