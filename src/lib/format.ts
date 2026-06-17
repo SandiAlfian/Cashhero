@@ -1,5 +1,21 @@
 import { Language } from "@/store/useLanguageStore"
-import { useSettingsStore, EXCHANGE_RATES } from "@/store/useSettingsStore"
+import { useSettingsStore, EXCHANGE_RATES, type MainCurrency } from "@/store/useSettingsStore"
+
+export const CURRENCY_SYMBOLS: Record<MainCurrency, string> = {
+  IDR: 'Rp',
+  USD: '$',
+  EUR: '€',
+  SGD: 'S$',
+  JPY: '¥'
+}
+
+export const formatInputVal = (val: string) => {
+  const clean = val.replace(/\D/g, "")
+  if (!clean) return ""
+  return new Intl.NumberFormat("id-ID").format(Number(clean))
+}
+
+export const parseNum = (str: string) => Number(str.replace(/\D/g, "")) || 0
 
 /**
  * Formats a numeric value into dynamic converted currency format.

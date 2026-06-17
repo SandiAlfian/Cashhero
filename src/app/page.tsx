@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { CurrencyInput } from "@/components/ui/currency-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -34,7 +35,7 @@ import { useLanguageStore, translations } from "@/store/useLanguageStore"
 import { usePortfolioStore, type AssetType, type InvestmentAsset, type AssetHistoryLog } from "@/store/usePortfolioStore"
 import { usePlanningStore } from "@/store/usePlanningStore"
 import { exportAssetHistoryToExcel, exportAssetHistoryToPDF } from "@/lib/export"
-import { formatCurrency, formatRelativeDate } from "@/lib/format"
+import { formatCurrency, formatRelativeDate, formatInputVal, parseNum } from "@/lib/format"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { motion, AnimatePresence, Variants } from "framer-motion"
 
@@ -708,15 +709,6 @@ export default function Home() {
     resetForm()
     setIsAdding(true)
   }
-
-  // Handle Form Inputs with thousands separators
-  const formatInputVal = (val: string) => {
-    const clean = val.replace(/\D/g, "")
-    if (!clean) return ""
-    return new Intl.NumberFormat("id-ID").format(Number(clean))
-  }
-
-  const parseNum = (str: string) => Number(str.replace(/\D/g, "")) || 0
 
   const handleSaveAsset = () => {
     const state = useSettingsStore.getState()
@@ -1413,7 +1405,7 @@ export default function Home() {
                           }[activeCurrency] || 'Rp'
                         }
                       </span>
-                      <Input 
+                      <CurrencyInput
                         value={assetInitialInput}
                         onChange={(e) => setAssetInitialInput(formatInputVal(e.target.value))}
                         className="pl-8 bg-muted/40 border border-input text-foreground focus-visible:ring-primary h-10 rounded-lg text-sm font-medium"
@@ -1435,7 +1427,7 @@ export default function Home() {
                           }[activeCurrency] || 'Rp'
                         }
                       </span>
-                      <Input 
+                      <CurrencyInput
                         value={assetGainLossInput}
                         onChange={(e) => setAssetGainLossInput(formatInputVal(e.target.value))}
                         className="pl-8 bg-muted/40 border border-input text-foreground focus-visible:ring-primary h-10 rounded-lg text-sm font-medium"
@@ -1594,8 +1586,7 @@ export default function Home() {
                     }[activeCurrency] || 'Rp'
                   })
                 </label>
-                <Input
-                  type="text"
+                <CurrencyInput
                   placeholder="0"
                   value={partialLiqAmountInput}
                   onChange={(e) => setPartialLiqAmountInput(formatInputVal(e.target.value))}

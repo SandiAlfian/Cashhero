@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { CurrencyInput } from "@/components/ui/currency-input"
 import { Button } from "@/components/ui/button"
 import {
   ChevronLeft,
@@ -709,7 +710,7 @@ export default function CalendarPage() {
                     {t('amountLabel').replace('(Rp)', `(${activeCurrency})`)}
                   </label>
                   <div className="relative">
-                    <Input
+                    <CurrencyInput
                       id="calendarNominalInput"
                       value={amount}
                       onChange={handleAmountChange}

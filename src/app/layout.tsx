@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 import { QuickEntryModal } from "@/components/QuickEntryModal";
 import { SecurityLockScreen } from "@/components/SecurityLockScreen";
+import { RecurringConfirmationModal } from "@/components/RecurringConfirmationModal";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { DesktopSidebar } from "@/components/DesktopSidebar";
 import { MobileHeader, MobileBottomBar } from "@/components/MobileNav";
@@ -76,6 +77,7 @@ export default function RootLayout({
                 </div>
                 <QuickEntryModal />
                 <SecurityLockScreen />
+                <RecurringConfirmationModal />
                 <MobileBottomBar />
               </main>
             </ClientLayoutWrapper>

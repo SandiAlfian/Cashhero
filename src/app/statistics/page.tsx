@@ -4,11 +4,10 @@ import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { useLanguageStore, translations } from "@/store/useLanguageStore"
 import { useTransactionStore } from "@/store/useTransactionStore"
-import { useSettingsStore } from "@/store/useSettingsStore"
 import { formatCurrency, formatRelativeDate } from "@/lib/format"
 import { motion, AnimatePresence } from "framer-motion"
-import { 
-  BarChart3, 
+import {
+  BarChart3,
   Calendar,
   ChevronDown,
   PieChart,
@@ -23,6 +22,7 @@ import {
   Image as FileImage
 } from "lucide-react"
 import { exportToExcel, exportToPDF } from "@/lib/export"
+import AverageAnalysisTab from "@/components/statistics/AverageAnalysisTab"
 import {
   Dialog,
   DialogContent,
@@ -54,6 +54,9 @@ export default function StatisticsPage() {
   const transactions = useTransactionStore((state) => state.transactions)
   const [mounted, setMounted] = React.useState(false)
 
+  // Tab state for Trend Analysis vs Average Analysis
+  const [activeTab, setActiveTab] = React.useState<'trend' | 'average'>('trend')
+
   // Interactive chart states
   const [activeLineIndex, setActiveLineIndex] = React.useState<number | null>(null)
   const [activeDonutIndex, setActiveDonutIndex] = React.useState<number | null>(null)
@@ -64,14 +67,9 @@ export default function StatisticsPage() {
   const svgRef = React.useRef<SVGSVGElement>(null)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
 
-  const defaultHistoryFilter = useSettingsStore((state) => state.defaultHistoryFilter)
+  // Raised filter states - Init with static default weekly (independent from settings)
+  const [filter, setFilter] = React.useState<'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'customPeriod'>('weekly')
 
-  // Raised filter states - Init with static value to prevent SSR Hydration Mismatch
-  const [filter, setFilter] = React.useState<'daily' | 'weekly' | 'monthly' | 'quarterly' | 'customPeriod'>('weekly')
-
-  React.useEffect(() => {
-    setFilter(defaultHistoryFilter)
-  }, [defaultHistoryFilter])
   const [startDate, setStartDate] = React.useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - 30)
@@ -87,7 +85,7 @@ export default function StatisticsPage() {
     monthNameId: string
     monthNameEn: string
   } | null>(null)
-  
+
   // Interactive modal chart state
   const [modalActiveIdx, setModalActiveIdx] = React.useState<number | null>(null)
   const modalChartRef = React.useRef<HTMLDivElement>(null)
@@ -98,7 +96,7 @@ export default function StatisticsPage() {
       const isId = language === 'id'
       const fileName = `Cashhero_Chart_${filter}_${new Date().toISOString().split('T')[0]}`
       const svgClone = svgRef.current.cloneNode(true) as SVGSVGElement
-      
+
       const styleBlock = document.createElement("style")
       styleBlock.textContent = `
         .stroke-border\\/40 { stroke: rgba(226, 232, 240, 0.45) !important; }
@@ -108,12 +106,12 @@ export default function StatisticsPage() {
         text { font-family: 'Plus Jakarta Sans', Arial, sans-serif !important; font-weight: 600; }
       `
       svgClone.insertBefore(styleBlock, svgClone.firstChild)
-      
+
       const svgString = new XMLSerializer().serializeToString(svgClone)
       const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" })
       const URL = window.URL || window.webkitURL || window
       const blobURL = URL.createObjectURL(svgBlob)
-      
+
       const image = new Image()
       image.onload = () => {
         // Render a professional data table in the exported PNG image
@@ -126,10 +124,10 @@ export default function StatisticsPage() {
           // Fill background
           context.fillStyle = "#ffffff"
           context.fillRect(0, 0, canvas.width, canvas.height)
-          
+
           // Draw chart SVG at y = 0
           context.drawImage(image, 0, 0, 1200, 520)
-          
+
           // Draw visual divider
           context.strokeStyle = "#E2E8F0"
           context.lineWidth = 2
@@ -137,35 +135,35 @@ export default function StatisticsPage() {
           context.moveTo(40, 535)
           context.lineTo(1160, 535)
           context.stroke()
-          
+
           // Draw table title header
           context.fillStyle = "#1E293B"
           context.font = "bold 16px Arial, sans-serif"
           context.fillText(isId ? "RINGKASAN DATA ARUS KAS" : "CASH FLOW DATA SUMMARY", 50, 565)
-          
+
           // Draw Table Header Block
           context.fillStyle = "#1E293B"
           context.fillRect(40, 580, 1120, 36)
-          
+
           // Draw Column Headers
           context.fillStyle = "#ffffff"
           context.font = "bold 12px Arial, sans-serif"
-          
-          const colHeaders = isId 
+
+          const colHeaders = isId
             ? ["Periode", "Total Pemasukan", "Total Pengeluaran", "Selisih Arus Kas"]
             : ["Period", "Total Income", "Total Expense", "Net Flow"]
-            
+
           context.textAlign = "left"
           context.fillText(colHeaders[0], 60, 602)
           context.textAlign = "right"
           context.fillText(colHeaders[1], 500, 602)
           context.fillText(colHeaders[2], 820, 602)
           context.fillText(colHeaders[3], 1140, 602)
-          
+
           // Draw Rows
           context.font = "bold 12px Arial, sans-serif"
           const maxRows = Math.min(6, displayCashFlow.length) // limit to 6 rows to prevent canvas clipping
-          
+
           const fmt = (num: number) => {
             return new Intl.NumberFormat(isId ? 'id-ID' : 'en-US', {
               style: 'currency',
@@ -174,38 +172,38 @@ export default function StatisticsPage() {
               maximumFractionDigits: 0
             }).format(num)
           }
-          
+
           for (let idx = 0; idx < maxRows; idx++) {
             const d = displayCashFlow[idx]
             const period = isId ? d.date : d.dateEn
             const net = d.income - d.expense
             const yRow = 635 + idx * 28
-            
+
             // Zebra background
             if (idx % 2 === 1) {
               context.fillStyle = "#F8FAFC"
               context.fillRect(40, yRow - 18, 1120, 24)
             }
-            
+
             // Period Label
             context.fillStyle = "#1E293B"
             context.textAlign = "left"
             context.fillText(period, 60, yRow)
-            
+
             // Income (Green)
             context.fillStyle = "#16A34A"
             context.textAlign = "right"
             context.fillText(fmt(d.income), 500, yRow)
-            
+
             // Expense (Red)
             context.fillStyle = "#DC2626"
             context.fillText(fmt(d.expense), 820, yRow)
-            
+
             // Net Flow (Blue/Amber)
             context.fillStyle = net >= 0 ? "#1D4ED8" : "#B91C1C"
             context.fillText((net >= 0 ? "+" : "") + fmt(net), 1140, yRow)
           }
-          
+
           // If displayCashFlow has more than 6 rows, print an ellipsis row
           if (displayCashFlow.length > 6) {
             const yEllipsis = 635 + 6 * 28
@@ -214,7 +212,7 @@ export default function StatisticsPage() {
             context.font = "italic 11px Arial, sans-serif"
             context.fillText(isId ? `... dan ${displayCashFlow.length - 6} data lainnya ...` : `... and ${displayCashFlow.length - 6} more periods ...`, 600, yEllipsis)
           }
-          
+
           // Trigger download link
           const pngURL = canvas.toDataURL("image/png")
           const downloadLink = document.createElement("a")
@@ -235,7 +233,7 @@ export default function StatisticsPage() {
     if (svgRef.current) {
       const isId = language === 'id'
       const svgClone = svgRef.current.cloneNode(true) as SVGSVGElement
-      
+
       const styleBlock = document.createElement("style")
       styleBlock.textContent = `
         .stroke-border\\/40 { stroke: rgba(226, 232, 240, 0.45) !important; }
@@ -245,12 +243,12 @@ export default function StatisticsPage() {
         text { font-family: 'Plus Jakarta Sans', Arial, sans-serif !important; font-weight: 600; }
       `
       svgClone.insertBefore(styleBlock, svgClone.firstChild)
-      
+
       const svgString = new XMLSerializer().serializeToString(svgClone)
       const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" })
       const URL = window.URL || window.webkitURL || window
       const blobURL = URL.createObjectURL(svgBlob)
-      
+
       const image = new Image()
       image.onload = () => {
         const canvas = document.createElement("canvas")
@@ -261,10 +259,10 @@ export default function StatisticsPage() {
           context.fillStyle = "#ffffff"
           context.fillRect(0, 0, canvas.width, canvas.height)
           context.drawImage(image, 0, 0, 1200, 520)
-          
+
           const pngURL = canvas.toDataURL("image/png")
-          
-          const chartHeaders = isId 
+
+          const chartHeaders = isId
             ? ["Periode", "Total Pemasukan", "Total Pengeluaran", "Selisih Bersih"]
             : ["Period", "Total Income", "Total Expense", "Net Flow"]
 
@@ -376,7 +374,7 @@ export default function StatisticsPage() {
     if (svgRef.current) {
       const isId = language === 'id'
       const svgClone = svgRef.current.cloneNode(true) as SVGSVGElement
-      
+
       const styleBlock = document.createElement("style")
       styleBlock.textContent = `
         .stroke-border\\/40 { stroke: rgba(226, 232, 240, 0.45) !important; }
@@ -386,12 +384,12 @@ export default function StatisticsPage() {
         text { font-family: 'Plus Jakarta Sans', Arial, sans-serif !important; font-weight: 600; }
       `
       svgClone.insertBefore(styleBlock, svgClone.firstChild)
-      
+
       const svgString = new XMLSerializer().serializeToString(svgClone)
       const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" })
       const URL = window.URL || window.webkitURL || window
       const blobURL = URL.createObjectURL(svgBlob)
-      
+
       const image = new Image()
       image.onload = () => {
         const canvas = document.createElement("canvas")
@@ -402,9 +400,9 @@ export default function StatisticsPage() {
           context.fillStyle = "#ffffff"
           context.fillRect(0, 0, canvas.width, canvas.height)
           context.drawImage(image, 0, 0, 1200, 520)
-          
+
           const pngURL = canvas.toDataURL("image/png")
-          
+
           const fmt = (num: number) => {
             return new Intl.NumberFormat(isId ? 'id-ID' : 'en-US', {
               style: 'currency',
@@ -422,7 +420,7 @@ export default function StatisticsPage() {
           }
           const chartModeLabel = chartModeLabels[chartMode] || chartMode
 
-          const headers = isId 
+          const headers = isId
             ? ["Periode", "Total Pemasukan", "Total Pengeluaran", "Selisih Bersih"]
             : ["Period", "Total Income", "Total Expense", "Net Flow"]
 
@@ -447,11 +445,11 @@ export default function StatisticsPage() {
               </tr>
             `
           }).join("")
-          
+
           // Dynamic filename based on date and filter
           const sanitizedFilter = filter.replace(/[^a-zA-Z0-9]/g, "_")
           const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, "_")
-          const docTitle = isId 
+          const docTitle = isId
             ? `Cashhero_Laporan_Grafik_${sanitizedFilter}_${dateStr}`
             : `Cashhero_Chart_Report_${sanitizedFilter}_${dateStr}`
 
@@ -673,14 +671,14 @@ export default function StatisticsPage() {
   // Dynamic period sub-label
   const periodSubLabel = React.useMemo(() => {
     switch (filter) {
-      case 'daily':
-        return language === 'id' ? 'Hari ini' : 'Today'
       case 'weekly':
         return language === 'id' ? 'Minggu ini' : 'This week'
       case 'monthly':
         return language === 'id' ? 'Bulan ini' : 'This month'
       case 'quarterly':
         return language === 'id' ? 'Kuartal ini' : 'This quarter'
+      case 'yearly':
+        return language === 'id' ? 'Tahun ini' : 'This year'
       case 'customPeriod':
         return language === 'id' ? 'Periode Terpilih' : 'Selected Period'
       default:
@@ -693,23 +691,16 @@ export default function StatisticsPage() {
     const today = new Date()
     return transactions.filter((tx) => {
       const txDate = new Date(tx.date)
-      if (filter === 'daily') {
-        return (
-          txDate.getDate() === today.getDate() &&
-          txDate.getMonth() === today.getMonth() &&
-          txDate.getFullYear() === today.getFullYear()
-        )
-      }
       if (filter === 'weekly') {
         const day = today.getDay()
         const diff = today.getDate() - day + (day === 0 ? -6 : 1) // Shift Monday to index 0
         const startOfWeek = new Date(today)
         startOfWeek.setDate(diff)
         startOfWeek.setHours(0, 0, 0, 0)
-        
+
         const endOfWeek = new Date(startOfWeek)
         endOfWeek.setDate(startOfWeek.getDate() + 7)
-        
+
         return txDate >= startOfWeek && txDate < endOfWeek
       }
       if (filter === 'monthly') {
@@ -726,6 +717,9 @@ export default function StatisticsPage() {
           txDate.getMonth() < startMonth + 3 &&
           txDate.getFullYear() === today.getFullYear()
         )
+      }
+      if (filter === 'yearly') {
+        return txDate.getFullYear() === today.getFullYear()
       }
       if (filter === 'customPeriod') {
         const sDate = new Date(startDate)
@@ -751,37 +745,13 @@ export default function StatisticsPage() {
 
   // 1. Calculate precise Time-Series Line Chart data from filtered transactions
   const displayCashFlow = React.useMemo((): CashFlowDataPoint[] => {
-    if (filter === 'daily') {
-      const hourlyIncome = Array(24).fill(0)
-      const hourlyExpense = Array(24).fill(0)
-      
-      filteredTransactions.forEach((tx) => {
-        const d = new Date(tx.date)
-        const hr = d.getHours()
-        if (tx.type === 'in') hourlyIncome[hr] += tx.amount
-        else hourlyExpense[hr] += tx.amount
-      })
-      
-      const pts: CashFlowDataPoint[] = []
-      for (let h = 0; h < 24; h++) {
-        const label = `${String(h).padStart(2, '0')}:00`
-        pts.push({
-          date: label,
-          dateEn: label,
-          income: hourlyIncome[h],
-          expense: hourlyExpense[h]
-        })
-      }
-      return pts
-    }
-
     if (filter === 'weekly') {
       const daysId = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
       const daysEn = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-      
+
       const dailyIncome = Array(7).fill(0)
       const dailyExpense = Array(7).fill(0)
-      
+
       filteredTransactions.forEach((tx) => {
         const d = new Date(tx.date)
         let dayIdx = d.getDay()
@@ -789,7 +759,7 @@ export default function StatisticsPage() {
         if (tx.type === 'in') dailyIncome[dayIdx] += tx.amount
         else dailyExpense[dayIdx] += tx.amount
       })
-      
+
       return daysId.map((dId, idx) => ({
         date: dId,
         dateEn: daysEn[idx],
@@ -803,10 +773,10 @@ export default function StatisticsPage() {
       const year = today.getFullYear()
       const month = today.getMonth()
       const totalDays = new Date(year, month + 1, 0).getDate()
-      
+
       const dailyIncome = Array(totalDays).fill(0)
       const dailyExpense = Array(totalDays).fill(0)
-      
+
       filteredTransactions.forEach((tx) => {
         const d = new Date(tx.date)
         if (d.getMonth() === month && d.getFullYear() === year) {
@@ -815,13 +785,13 @@ export default function StatisticsPage() {
           else dailyExpense[dayIdx] += tx.amount
         }
       })
-      
+
       const pts: CashFlowDataPoint[] = []
-      const monthsId = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agt","Sep","Okt","Nov","Des"]
-      const monthsEn = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+      const monthsId = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"]
+      const monthsEn = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
       const mLabelId = monthsId[month]
       const mLabelEn = monthsEn[month]
-      
+
       for (let day = 1; day <= totalDays; day++) {
         pts.push({
           date: `${day} ${mLabelId}`,
@@ -837,13 +807,13 @@ export default function StatisticsPage() {
       const today = new Date()
       const quarter = Math.floor(today.getMonth() / 3)
       const startMonth = quarter * 3
-      
+
       const monthsId = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
       const monthsEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-      
+
       const monthlyIncome = Array(3).fill(0)
       const monthlyExpense = Array(3).fill(0)
-      
+
       filteredTransactions.forEach((tx) => {
         const d = new Date(tx.date)
         const mIdx = d.getMonth()
@@ -853,7 +823,7 @@ export default function StatisticsPage() {
           else monthlyExpense[offset] += tx.amount
         }
       })
-      
+
       const pts: CashFlowDataPoint[] = []
       for (let idx = 0; idx < 3; idx++) {
         const actualMonth = startMonth + idx
@@ -871,17 +841,17 @@ export default function StatisticsPage() {
     const grouped: Record<string, { income: number; expense: number; dateRaw: string }> = {}
     filteredTransactions.forEach((tx) => {
       const d = new Date(tx.date)
-      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       if (!grouped[key]) grouped[key] = { income: 0, expense: 0, dateRaw: tx.date }
       if (tx.type === 'in') grouped[key].income += tx.amount
       else grouped[key].expense += tx.amount
     })
-    const monthsId = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agt","Sep","Okt","Nov","Des"]
-    const monthsEn = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    const monthsId = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"]
+    const monthsEn = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     const sorted = Object.keys(grouped).sort()
     const pts: CashFlowDataPoint[] = sorted.map(k => {
       const v = grouped[k]; const d = new Date(v.dateRaw)
-      const day = String(d.getDate()).padStart(2,'0')
+      const day = String(d.getDate()).padStart(2, '0')
       return {
         date: `${day} ${monthsId[d.getMonth()]}`,
         dateEn: `${monthsEn[d.getMonth()]} ${day}`,
@@ -925,7 +895,7 @@ export default function StatisticsPage() {
       const top4 = categoryList.slice(0, 4)
       const rest = categoryList.slice(4)
       const restAmount = rest.reduce((sum, item) => sum + item.amount, 0)
-      
+
       top4.forEach((item) => {
         finalCategories.push({
           category: item.category,
@@ -933,7 +903,7 @@ export default function StatisticsPage() {
           amount: item.amount
         })
       })
-      
+
       finalCategories.push({
         category: "Lainnya",
         categoryEn: "Others",
@@ -1066,13 +1036,13 @@ export default function StatisticsPage() {
 
   const tooltipStyle = React.useMemo((): React.CSSProperties => {
     if (activeLineIndex === null || !displayCashFlow[activeLineIndex] || !incomePoints[activeLineIndex] || !expensePoints[activeLineIndex]) return {}
-    
+
     const xPos = (incomePoints[activeLineIndex].x / svgWidth) * 100
     const isFirst = activeLineIndex === 0
     const isLast = activeLineIndex === displayCashFlow.length - 1
-    
+
     const yPct = (activeMinY / svgHeight) * 100
-    
+
     if (isLast) {
       return {
         right: "8px",
@@ -1080,14 +1050,14 @@ export default function StatisticsPage() {
         top: `${yPct}%`
       }
     }
-    
+
     if (isFirst) {
       return {
         left: "8px",
         top: `${yPct}%`
       }
     }
-    
+
     return {
       left: `${xPos}%`,
       top: `${yPct}%`
@@ -1120,21 +1090,21 @@ export default function StatisticsPage() {
     if (!selectedMonthDetail) return []
     const year = new Date().getFullYear()
     const totalDays = new Date(year, selectedMonthDetail.monthIndex + 1, 0).getDate()
-    
+
     const dailyIncome = Array(totalDays).fill(0)
     const dailyExpense = Array(totalDays).fill(0)
-    
+
     monthTransactions.forEach((tx) => {
       const d = new Date(tx.date)
       const dayIdx = d.getDate() - 1
       if (tx.type === 'in') dailyIncome[dayIdx] += tx.amount
       else dailyExpense[dayIdx] += tx.amount
     })
-    
+
     const pts: CashFlowDataPoint[] = []
     const mLabelId = selectedMonthDetail.monthNameId.substring(0, 3)
     const mLabelEn = selectedMonthDetail.monthNameEn.substring(0, 3)
-    
+
     for (let day = 1; day <= totalDays; day++) {
       pts.push({
         date: `${day} ${mLabelId}`,
@@ -1183,14 +1153,14 @@ export default function StatisticsPage() {
 
   const modalTooltipStyle = React.useMemo((): React.CSSProperties => {
     if (modalActiveIdx === null || !monthDailyFlow[modalActiveIdx] || !modalIncPts[modalActiveIdx] || !modalExpPts[modalActiveIdx]) return {}
-    
+
     const xPos = (modalIncPts[modalActiveIdx].x / svgWidth) * 100
     const isFirst = modalActiveIdx === 0
     const isLast = modalActiveIdx === monthDailyFlow.length - 1
-    
+
     const minY = Math.min(modalIncPts[modalActiveIdx].y, modalExpPts[modalActiveIdx].y)
     const yPct = (minY / svgHeight) * 100
-    
+
     if (isLast) {
       return {
         right: "8px",
@@ -1198,14 +1168,14 @@ export default function StatisticsPage() {
         top: `${yPct}%`
       }
     }
-    
+
     if (isFirst) {
       return {
         left: "8px",
         top: `${yPct}%`
       }
     }
-    
+
     return {
       left: `${xPos}%`,
       top: `${yPct}%`
@@ -1257,6 +1227,32 @@ export default function StatisticsPage() {
         </div>
       </div>
 
+      {/* TAB NAVIGATION */}
+      <div className="flex items-center gap-1 bg-card border border-border p-1 rounded-xl shadow-sm w-fit">
+        <button
+          onClick={() => setActiveTab('trend')}
+          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-2 ${
+            activeTab === 'trend'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+          }`}
+        >
+          <LineChart className="w-4 h-4" />
+          {t('trendAnalysis')}
+        </button>
+        <button
+          onClick={() => setActiveTab('average')}
+          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-2 ${
+            activeTab === 'average'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          {t('averageAnalysis')}
+        </button>
+      </div>
+
       {/* FILTER CONTROL BAR */}
       <div className="flex flex-col gap-4 bg-card border border-border p-4 rounded-xl shadow-sm no-print">
         {/* TAMPILAN DESKTOP (Horizontal Buttons & Inline Date) */}
@@ -1265,20 +1261,19 @@ export default function StatisticsPage() {
             <Filter className="w-3.5 h-3.5" />
             {t('filterPeriod')}:
           </span>
-          
+
           <div className="flex items-center gap-1.5 shrink-0">
-            {(['daily', 'weekly', 'monthly', 'quarterly', 'customPeriod'] as const).map((p) => (
+            {(['weekly', 'monthly', 'quarterly', 'yearly', 'customPeriod'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => {
                   setFilter(p)
                   setActiveLineIndex(null)
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer shrink-0 ${
-                  filter === p
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 cursor-pointer shrink-0 ${filter === p
                     ? "bg-primary text-primary-foreground shadow-sm scale-[1.02]"
                     : "bg-muted/40 text-muted-foreground hover:bg-muted/80 hover:text-foreground border border-transparent hover:border-border"
-                }`}
+                  }`}
               >
                 {t(p)}
               </button>
@@ -1316,7 +1311,7 @@ export default function StatisticsPage() {
               <Filter className="w-4 h-4" />
               {t('filterPeriod')}
             </span>
-            
+
             {/* Interactive Custom Dropdown */}
             <div className="relative flex-1 max-w-[200px]">
               <button
@@ -1339,7 +1334,7 @@ export default function StatisticsPage() {
                     transition={{ duration: 0.15 }}
                     className="absolute right-0 mt-2 w-[180px] bg-background/95 border border-border rounded-xl shadow-xl backdrop-blur-md z-50 p-1 flex flex-col gap-0.5"
                   >
-                    {(['daily', 'weekly', 'monthly', 'quarterly', 'customPeriod'] as const).map((p) => {
+                    {(['weekly', 'monthly', 'quarterly', 'yearly', 'customPeriod'] as const).map((p) => {
                       const isActive = filter === p
                       return (
                         <button
@@ -1349,11 +1344,10 @@ export default function StatisticsPage() {
                             setActiveLineIndex(null)
                             setIsMobileFilterDropdownOpen(false)
                           }}
-                          className={`w-full px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all duration-150 cursor-pointer flex items-center gap-2 ${
-                            isActive
+                          className={`w-full px-3 py-2.5 rounded-lg text-left text-xs font-bold transition-all duration-150 cursor-pointer flex items-center gap-2 ${isActive
                               ? "bg-primary text-primary-foreground shadow-sm"
                               : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                          }`}
+                            }`}
                         >
                           <span>{t(p)}</span>
                         </button>
@@ -1390,6 +1384,8 @@ export default function StatisticsPage() {
         </div>
       </div>
 
+      {activeTab === 'trend' && (
+      <>
       {/* 3 PREMIUM SUMMARY METRIC CARDS */}
       <div className="grid gap-6 md:grid-cols-3">
         {/* Pemasukan Card */}
@@ -1449,13 +1445,12 @@ export default function StatisticsPage() {
 
       {/* CHARTS ROW */}
       <div className="grid gap-6 lg:grid-cols-7">
-        
+
         {/* LINE CHART: Cash Flow Trend */}
-        <Card 
-          ref={chartRef} 
-          className={`lg:col-span-4 bg-card border-border shadow-sm flex flex-col justify-between relative transition-all duration-300 overflow-visible ${
-            activeLineIndex !== null ? 'z-40' : 'z-10 hover:z-20'
-          }`}
+        <Card
+          ref={chartRef}
+          className={`lg:col-span-4 bg-card border-border shadow-sm flex flex-col justify-between relative transition-all duration-300 overflow-visible ${activeLineIndex !== null ? 'z-40' : 'z-10 hover:z-20'
+            }`}
         >
           <CardHeader className="flex flex-col gap-4 border-b border-border/50 pb-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1465,16 +1460,16 @@ export default function StatisticsPage() {
                   {t('cashFlowTrend')}
                 </CardTitle>
                 <CardDescription className="text-xs mt-1">
-                  {filter === 'quarterly' 
-                    ? (language === 'id' 
-                        ? "Klik titik bulan untuk melihat rincian tren harian & daftar transaksi!" 
-                        : "Click month points to open daily detailed trends & transaction lists!")
-                    : (language === 'id' 
-                        ? "Uraian tren pemasukan dan pengeluaran Anda pada periode terpilih." 
-                        : "Income vs expense breakdown trends for the selected period.")}
+                  {filter === 'quarterly'
+                    ? (language === 'id'
+                      ? "Klik titik bulan untuk melihat rincian tren harian & daftar transaksi!"
+                      : "Click month points to open daily detailed trends & transaction lists!")
+                    : (language === 'id'
+                      ? "Uraian tren pemasukan dan pengeluaran Anda pada periode terpilih."
+                      : "Income vs expense breakdown trends for the selected period.")}
                 </CardDescription>
               </div>
-              
+
               {/* Chart Actions: Exports */}
               <div className="flex items-center gap-1.5 self-start md:self-center bg-muted/30 p-1 rounded-lg border border-border/50 no-print">
                 <button
@@ -1517,7 +1512,7 @@ export default function StatisticsPage() {
                       stacked: AreaChart,
                       netFlow: TrendingUp
                     }[chartMode]
-                    
+
                     const currentLabel = {
                       line: language === 'id' ? 'Garis' : 'Line',
                       bar: language === 'id' ? 'Batang Komparasi' : 'Side-by-Side Bar',
@@ -1567,11 +1562,10 @@ export default function StatisticsPage() {
                               setActiveLineIndex(null)
                               setIsChartModeDropdownOpen(false)
                             }}
-                            className={`w-full px-3 py-2 rounded-lg text-left text-xs font-bold transition-all duration-150 cursor-pointer flex items-center gap-2 ${
-                              isActive
+                            className={`w-full px-3 py-2 rounded-lg text-left text-xs font-bold transition-all duration-150 cursor-pointer flex items-center gap-2 ${isActive
                                 ? "bg-primary text-primary-foreground shadow-sm"
                                 : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                            }`}
+                              }`}
                           >
                             <Icon className="w-4 h-4" />
                             <span>{modeLabel}</span>
@@ -1607,7 +1601,7 @@ export default function StatisticsPage() {
               </div>
             </div>
           </CardHeader>
-          
+
           <CardContent className="pt-4 flex-1 flex flex-col justify-center relative select-none">
             {displayCashFlow.length === 0 ? (
               <div className="h-[260px] w-full rounded-md border border-dashed border-border/60 bg-muted/5 flex flex-col items-center justify-center gap-3.5 p-6 text-center">
@@ -1644,14 +1638,14 @@ export default function StatisticsPage() {
                   {[0, 0.25, 0.5, 0.75, 1].map((r, idx) => {
                     const y = paddingY + r * chartHeight
                     return (
-                      <line 
-                        key={idx} 
-                        x1={paddingX} 
-                        y1={y} 
-                        x2={svgWidth - paddingX} 
-                        y2={y} 
-                        className="stroke-border/40" 
-                        strokeDasharray="4 4" 
+                      <line
+                        key={idx}
+                        x1={paddingX}
+                        y1={y}
+                        x2={svgWidth - paddingX}
+                        y2={y}
+                        className="stroke-border/40"
+                        strokeDasharray="4 4"
                       />
                     )
                   })}
@@ -1676,13 +1670,13 @@ export default function StatisticsPage() {
                         const xCenter = paddingX + (i / Math.max(1, displayCashFlow.length - 1)) * chartWidth
                         const barWidth = Math.max(4, Math.min(14, chartWidth / (displayCashFlow.length * 3.5)))
                         const gap = 1.5
-                        
+
                         const incHeight = (d.income / maxVal) * chartHeight
                         const incY = paddingY + chartHeight - incHeight
-                        
+
                         const expHeight = (d.expense / maxVal) * chartHeight
                         const expY = paddingY + chartHeight - expHeight
-                        
+
                         const isActive = activeLineIndex === i
 
                         return (
@@ -1721,20 +1715,20 @@ export default function StatisticsPage() {
                       {displayCashFlow.map((d, i) => {
                         const xCenter = paddingX + (i / Math.max(1, displayCashFlow.length - 1)) * chartWidth
                         const barWidth = Math.max(6, Math.min(20, chartWidth / (displayCashFlow.length * 2.2)))
-                        
+
                         const incHeight = (d.income / maxVal) * chartHeight
                         const incY = paddingY + chartHeight - incHeight
-                        
+
                         const expHeight = (d.expense / maxVal) * chartHeight
                         const expY = incY - expHeight
-                        
+
                         const isActive = activeLineIndex === i
 
                         return (
                           <g key={i} className="transition-all duration-200">
                             {/* Income Bar (Bottom) */}
                             <rect
-                              x={xCenter - barWidth/2}
+                              x={xCenter - barWidth / 2}
                               y={incY}
                               width={barWidth}
                               height={Math.max(1, incHeight)}
@@ -1745,7 +1739,7 @@ export default function StatisticsPage() {
                             />
                             {/* Expense Bar (Top) */}
                             <rect
-                              x={xCenter - barWidth/2}
+                              x={xCenter - barWidth / 2}
                               y={expY}
                               width={barWidth}
                               height={Math.max(1, expHeight)}
@@ -1774,7 +1768,7 @@ export default function StatisticsPage() {
                         strokeDasharray="4 4"
                         opacity="0.8"
                       />
-                      
+
                       {/* Zero label */}
                       <text
                         x={paddingX - 10}
@@ -1788,20 +1782,20 @@ export default function StatisticsPage() {
                       {displayCashFlow.map((d, i) => {
                         const xCenter = paddingX + (i / Math.max(1, displayCashFlow.length - 1)) * chartWidth
                         const barWidth = Math.max(6, Math.min(22, chartWidth / (displayCashFlow.length * 2)))
-                        
+
                         const netVal = d.income - d.expense
                         const yVal = netFlowData.yZero - (netVal / netFlowData.scaleMax) * (chartHeight / 2)
-                        
+
                         const isPositive = netVal >= 0
                         const yPos = isPositive ? yVal : netFlowData.yZero
                         const barHeight = Math.max(2, Math.abs(netFlowData.yZero - yVal))
-                        
+
                         const isActive = activeLineIndex === i
 
                         return (
                           <g key={i} className="transition-all duration-200">
                             <rect
-                              x={xCenter - barWidth/2}
+                              x={xCenter - barWidth / 2}
                               y={yPos}
                               width={barWidth}
                               height={barHeight}
@@ -1867,7 +1861,6 @@ export default function StatisticsPage() {
                     if (!p) return null
 
                     // Thin labels dynamically to avoid collision on mobile/tablets
-                    if (filter === 'daily' && i % 4 !== 0 && i !== 23) return null
                     if (filter === 'monthly' && (i + 1) % 5 !== 0 && i !== 0 && i !== displayCashFlow.length - 1) return null
 
                     const label = language === 'id' ? d.date : d.dateEn
@@ -1906,10 +1899,10 @@ export default function StatisticsPage() {
                             const quarter = Math.floor(today.getMonth() / 3)
                             const startMonth = quarter * 3
                             const actualMonth = startMonth + i
-                            
+
                             const monthsId = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
                             const monthsEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-                            
+
                             setSelectedMonthDetail({
                               monthIndex: actualMonth,
                               monthNameId: monthsId[actualMonth],
@@ -1949,17 +1942,16 @@ export default function StatisticsPage() {
                           <span>{t('expense')}:</span>
                           <span>{formatCurrency(displayCashFlow[activeLineIndex].expense, language)}</span>
                         </div>
-                        
+
                         {/* Net Flow / Selisih Bersih in Tooltip */}
-                        <div className={`flex items-center justify-between gap-6 border-t border-border/40 pt-1 mt-1 font-bold ${
-                          (displayCashFlow[activeLineIndex].income - displayCashFlow[activeLineIndex].expense) >= 0 
-                            ? 'text-blue-600 dark:text-blue-400' 
+                        <div className={`flex items-center justify-between gap-6 border-t border-border/40 pt-1 mt-1 font-bold ${(displayCashFlow[activeLineIndex].income - displayCashFlow[activeLineIndex].expense) >= 0
+                            ? 'text-blue-600 dark:text-blue-400'
                             : 'text-amber-600 dark:text-amber-400'
-                        }`}>
+                          }`}>
                           <span>{language === 'id' ? 'Selisih:' : 'Net:'}</span>
                           <span>
-                            {((displayCashFlow[activeLineIndex].income - displayCashFlow[activeLineIndex].expense) >= 0 ? "+" : "") + 
-                             formatCurrency(displayCashFlow[activeLineIndex].income - displayCashFlow[activeLineIndex].expense, language)}
+                            {((displayCashFlow[activeLineIndex].income - displayCashFlow[activeLineIndex].expense) >= 0 ? "+" : "") +
+                              formatCurrency(displayCashFlow[activeLineIndex].income - displayCashFlow[activeLineIndex].expense, language)}
                           </span>
                         </div>
 
@@ -1986,12 +1978,12 @@ export default function StatisticsPage() {
               {t('topExpenses')}
             </CardTitle>
             <CardDescription className="text-xs">
-              {language === 'id' 
-                ? "Pembagian pengeluaran teratas berdasarkan kategori." 
+              {language === 'id'
+                ? "Pembagian pengeluaran teratas berdasarkan kategori."
                 : "Top expenses breakdown mapped dynamically by category."}
             </CardDescription>
           </CardHeader>
-          
+
           <CardContent className="pt-2 flex-1 flex flex-col items-center justify-center gap-6">
             {totalSpent === 0 || donutData.length === 0 ? (
               <div className="h-[320px] w-full rounded-md border border-dashed border-border/60 bg-muted/5 flex flex-col items-center justify-center gap-3.5 p-6 text-center">
@@ -2074,11 +2066,10 @@ export default function StatisticsPage() {
                     const isHovered = activeDonutIndex === i
 
                     return (
-                      <div 
-                        key={i} 
-                        className={`flex items-center justify-between p-1.5 rounded-lg transition-all duration-150 ${
-                          isHovered ? 'bg-primary/5 scale-[1.01]' : ''
-                        }`}
+                      <div
+                        key={i}
+                        className={`flex items-center justify-between p-1.5 rounded-lg transition-all duration-150 ${isHovered ? 'bg-primary/5 scale-[1.01]' : ''
+                          }`}
                         onMouseEnter={() => setActiveDonutIndex(i)}
                         onMouseLeave={() => setActiveDonutIndex(null)}
                       >
@@ -2107,7 +2098,7 @@ export default function StatisticsPage() {
       {/* ──────────────────────────────────────────────────────────────────────── */}
       {/* QUARTERLY DETAIL MODAL (BULANAN DETAIL) */}
       {/* ──────────────────────────────────────────────────────────────────────── */}
-      <Dialog open={selectedMonthDetail !== null} onOpenChange={(open) => { if(!open) setSelectedMonthDetail(null) }}>
+      <Dialog open={selectedMonthDetail !== null} onOpenChange={(open) => { if (!open) setSelectedMonthDetail(null) }}>
         {selectedMonthDetail && (
           <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto scrollbar-none bg-background/95 border-border text-foreground backdrop-blur-xl p-6 shadow-2xl rounded-xl">
             <DialogHeader className="mb-4">
@@ -2185,7 +2176,7 @@ export default function StatisticsPage() {
                 <BarChart3 className="w-3.5 h-3.5 text-primary" />
                 {language === 'id' ? 'Grafik Harian Bulan Ini' : 'Daily Trend Chart This Month'}
               </h4>
-              
+
               {monthDailyFlow.length === 0 ? (
                 <div className="py-8 text-center text-xs text-muted-foreground">
                   {language === 'id' ? 'Tidak ada transaksi harian.' : 'No daily transactions recorded.'}
@@ -2303,7 +2294,7 @@ export default function StatisticsPage() {
                 <Calendar className="w-3.5 h-3.5 text-primary" />
                 {language === 'id' ? 'Daftar Transaksi Bulan Ini' : 'Transactions List This Month'}
               </h4>
-              
+
               <div className="max-h-[220px] overflow-y-auto pr-1 space-y-2">
                 {monthTransactions.length > 0 ? (
                   monthTransactions.map((tx) => (
@@ -2341,6 +2332,18 @@ export default function StatisticsPage() {
           </DialogContent>
         )}
       </Dialog>
+      </>
+      )}
+
+      {activeTab === 'average' && (
+        <AverageAnalysisTab
+          filter={filter}
+          filteredTransactions={filteredTransactions}
+          startDate={startDate}
+          endDate={endDate}
+          periodSubLabel={periodSubLabel}
+        />
+      )}
 
     </motion.div>
   )

@@ -204,7 +204,7 @@ export default function SettingsPage() {
 
   // Preferences Local Input State
   const [localCurrency, setLocalCurrency] = React.useState<MainCurrency>("IDR")
-  const [localFilter, setLocalFilter] = React.useState<"daily" | "weekly" | "monthly">("weekly")
+  const [localFilter, setLocalFilter] = React.useState<"daily" | "weekly" | "monthly" | "quarterly" | "customPeriod">("weekly")
   const [localAutoLogging, setLocalAutoLogging] = React.useState(true)
 
   // PIN Pad Modal State
@@ -379,6 +379,8 @@ export default function SettingsPage() {
     { value: "daily" as const, label: t('daily') },
     { value: "weekly" as const, label: t('weekly') },
     { value: "monthly" as const, label: t('monthly') },
+    { value: "quarterly" as const, label: t('quarterly') },
+    { value: "customPeriod" as const, label: t('customPeriod') },
   ], [t])
 
   const lt = React.useCallback((key: keyof typeof localT['id']) => {
@@ -1263,10 +1265,35 @@ export default function SettingsPage() {
 
                             triggerToast(
                               language === 'id'
-                                ? "Memproses notifikasi uji coba... Silakan kunci layar perangkat atau minimalkan aplikasi dalam 5 detik."
-                                : "Processing test notification... Please lock your screen or minimize the app within 5 seconds."
+                                ? "Memproses notifikasi uji coba... Mohon tunggu."
+                                : "Processing test notification... Please wait."
                             )
 
+                            // Test FCM server-side push via backend
+                            fetch('/api/fcm/test').then(async (res) => {
+                              const data = await res.json()
+                              if (data.ok) {
+                                triggerToast(
+                                  language === 'id'
+                                    ? 'Notifikasi uji coba berhasil dikirim! Cek perangkat Anda.'
+                                    : 'Test notification sent successfully! Check your device.'
+                                )
+                              } else {
+                                triggerToast(
+                                  language === 'id'
+                                    ? `Gagal: ${data.error || 'unknown error'}`
+                                    : `Failed: ${data.error || 'unknown error'}`
+                                )
+                              }
+                            }).catch((e) => {
+                              triggerToast(
+                                language === 'id'
+                                  ? `Gagal: ${e.message}`
+                                  : `Failed: ${e.message}`
+                              )
+                            })
+
+                            // Fallback: send local notification via SW as backup
                             setTimeout(() => {
                               navigator.serviceWorker.ready.then((registration) => {
                                 registration.active?.postMessage({

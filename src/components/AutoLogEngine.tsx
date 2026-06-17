@@ -1,130 +1,202 @@
 'use client'
 
 import React from 'react'
-import { useAutoLogStore } from '@/store/useAutoLogStore'
+import { useAutoLogStore, type PendingRecurring, type AutoLogFrequency } from '@/store/useAutoLogStore'
 import { useTransactionStore } from '@/store/useTransactionStore'
 import { useSettingsStore } from '@/store/useSettingsStore'
+import { useLanguageStore } from '@/store/useLanguageStore'
+import { savePendingItems, removePendingItem as removeCachedPending } from '@/lib/pendingRecurring'
 
-// ─── Helper: Hitung jumlah eksekusi yang terlewat ─────────────────────────────
-function countMissedExecutions(
-  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly',
+function countMissedDates(
+  frequency: AutoLogFrequency,
   startDate: Date,
   lastExecuted: Date | null,
   today: Date
-): { count: number; dates: Date[] } {
+): Date[] {
   const from = lastExecuted ?? startDate
   const dates: Date[] = []
   const cursor = new Date(from)
 
-  // Maju satu interval dari lastExecuted atau startDate
   switch (frequency) {
-    case 'daily':
-      cursor.setDate(cursor.getDate() + 1)
-      break
-    case 'weekly':
-      cursor.setDate(cursor.getDate() + 7)
-      break
-    case 'monthly':
-      cursor.setMonth(cursor.getMonth() + 1)
-      break
-    case 'yearly':
-      cursor.setFullYear(cursor.getFullYear() + 1)
-      break
+    case 'daily': cursor.setDate(cursor.getDate() + 1); break
+    case 'weekly': cursor.setDate(cursor.getDate() + 7); break
+    case 'monthly': cursor.setMonth(cursor.getMonth() + 1); break
+    case 'yearly': cursor.setFullYear(cursor.getFullYear() + 1); break
   }
 
-  // Kumpulkan semua tanggal yang sudah lewat
   while (cursor <= today) {
     dates.push(new Date(cursor))
     switch (frequency) {
-      case 'daily':
-        cursor.setDate(cursor.getDate() + 1)
-        break
-      case 'weekly':
-        cursor.setDate(cursor.getDate() + 7)
-        break
-      case 'monthly':
-        cursor.setMonth(cursor.getMonth() + 1)
-        break
-      case 'yearly':
-        cursor.setFullYear(cursor.getFullYear() + 1)
-        break
+      case 'daily': cursor.setDate(cursor.getDate() + 1); break
+      case 'weekly': cursor.setDate(cursor.getDate() + 7); break
+      case 'monthly': cursor.setMonth(cursor.getMonth() + 1); break
+      case 'yearly': cursor.setFullYear(cursor.getFullYear() + 1); break
+    }
+  }
+  return dates
+}
+
+function processRules() {
+  const rules = useAutoLogStore.getState().rules
+  const existingPending = useAutoLogStore.getState().pendingItems
+  const setPendingItems = useAutoLogStore.getState().setPendingItems
+
+  const today = new Date()
+  today.setHours(23, 59, 59, 999)
+  const newPending: PendingRecurring[] = []
+
+  for (const rule of rules) {
+    if (!rule.isActive) continue
+    const startDate = new Date(rule.startDate)
+    if (startDate > today) continue
+
+    const lastEx = rule.lastExecutedDate ? new Date(rule.lastExecutedDate) : null
+    const dates = countMissedDates(rule.frequency, startDate, lastEx, today)
+    if (dates.length === 0) continue
+
+    for (const d of dates) {
+      const dueDate = d.toISOString().slice(0, 10)
+      const alreadyPending = existingPending.some(
+        (p) => p.ruleId === rule.id && p.dueDate === dueDate
+      )
+      if (alreadyPending) continue
+
+      const item: PendingRecurring = {
+        id: `${rule.id}-${dueDate}`,
+        ruleId: rule.id,
+        title: rule.title,
+        amount: rule.amount,
+        type: rule.type,
+        category: rule.category,
+        frequency: rule.frequency,
+        dueDate,
+        createdAt: new Date().toISOString(),
+      }
+      newPending.push(item)
     }
   }
 
-  return { count: dates.length, dates }
+  if (newPending.length === 0) return newPending.length
+
+  // Batch add all new pending items to store
+  const allPending = [...existingPending, ...newPending]
+  setPendingItems(allPending)
+
+  // Sync to Cache API for SW notifications
+  savePendingItems(allPending)
+
+  return newPending.length
 }
 
-// ─── AutoLogEngine — komponen invisible yang berjalan di root layout ───────────
 export function AutoLogEngine() {
-  const rules = useAutoLogStore((s) => s.rules)
-  const updateLastExecuted = useAutoLogStore((s) => s.updateLastExecuted)
-  const addTransaction = useTransactionStore((s) => s.addTransaction)
   const autoLogging = useSettingsStore((s) => s.autoLogging)
   const fetchExchangeRates = useSettingsStore((s) => s.fetchExchangeRates)
+  const language = useLanguageStore((s) => s.language)
 
   React.useEffect(() => {
-    // Ambil data kurs mata uang asing terupdate secara real-time
     fetchExchangeRates()
-
-    // Jika fitur auto logging dimatikan, berhenti
     if (!autoLogging) return
 
-    const today = new Date()
-    today.setHours(23, 59, 59, 999)
-    let totalExecuted = 0
-
-    rules.forEach((rule) => {
-      if (!rule.isActive) return
-
-      const startDate = new Date(rule.startDate)
-      const lastExecuted = rule.lastExecutedDate
-        ? new Date(rule.lastExecutedDate)
-        : null
-
-      // Jangan eksekusi jika startDate masih di masa depan
-      if (startDate > today) return
-
-      const { count, dates } = countMissedExecutions(
-        rule.frequency,
-        startDate,
-        lastExecuted,
-        today
-      )
-
-      if (count === 0) return
-
-      // Injeksi semua transaksi yang terlewat
-      dates.forEach((txDate) => {
-        txDate.setHours(12, 0, 0, 0)
-        addTransaction({
-          amount: rule.amount,
-          type: rule.type,
-          category: rule.category,
-          note: rule.note || rule.title,
-          date: txDate.toISOString(),
-        })
-      })
-
-      // Update lastExecutedDate ke tanggal terakhir yang dieksekusi
-      updateLastExecuted(rule.id, dates[dates.length - 1].toISOString())
-      totalExecuted += count
-    })
-
-    // Tampilkan Toast ringkasan jika ada yang dieksekusi
-    if (totalExecuted > 0) {
-      // Toast will be shown by ToastProvider with updated style
-    }
-
-    // ── Service Worker Registration ────────────────────────────────────────────
+    // Register SW
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .catch(() => {
-          // SW registration failed, ignore silently in production
-        })
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Hanya dijalankan sekali saat mount (buka aplikasi)
 
-  return null // Tidak merender apapun
+    // Process rules on mount
+    const newCount = processRules()
+
+    // Send notification if new pending items were created
+    if (newCount > 0) {
+      const sendNotif = async () => {
+        const pending = useAutoLogStore.getState().pendingItems
+        if (pending.length === 0) return
+        const msg = useLanguageStore.getState().language === 'id'
+          ? `${pending.length} transaksi berulang menunggu konfirmasi Anda.`
+          : `${pending.length} recurring transactions awaiting your confirmation.`
+        if (!('serviceWorker' in navigator)) return
+        const reg = await navigator.serviceWorker.ready
+        reg.active?.postMessage({
+          type: 'SHOW_LOCAL_NOTIFICATION',
+          payload: {
+            title: 'Cashhero',
+            options: { body: msg, tag: 'recurring-pending', vibrate: [200, 100, 200] }
+          }
+        })
+      }
+      sendNotif()
+    }
+
+    // Periodic check every 30 min while app is open
+    const interval = setInterval(() => {
+      const n = processRules()
+      if (n > 0) {
+        const pending = useAutoLogStore.getState().pendingItems
+        const msg = language === 'id'
+          ? `${pending.length} transaksi berulang menunggu konfirmasi Anda.`
+          : `${pending.length} recurring transactions awaiting your confirmation.`
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then((reg) => {
+            reg.active?.postMessage({
+              type: 'SHOW_LOCAL_NOTIFICATION',
+              payload: {
+                title: 'Cashhero',
+                options: { body: msg, tag: 'recurring-pending', vibrate: [200, 100, 200] }
+              }
+            })
+          })
+        }
+      }
+    }, 30 * 60 * 1000)
+
+    return () => clearInterval(interval)
+  }, [autoLogging, fetchExchangeRates, language])
+
+  // Listen for recurring action results from SW
+  React.useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      const data = event.data
+      if (!data || data.type !== 'RECURRING_ACTION') return
+      const { action, pendingId } = data.payload
+      const store = useAutoLogStore.getState()
+      const item = store.pendingItems.find(p => p.id === pendingId)
+      if (!item) return
+
+      if (action === 'confirm') {
+        const result = store.confirmPending(pendingId)
+        if (result) {
+          store.updateLastExecuted(result.ruleId, result.dueDate)
+          useTransactionStore.getState().addTransaction({
+            amount: item.amount,
+            type: item.type,
+            category: item.category,
+            note: item.title,
+            date: new Date(item.dueDate + 'T12:00:00').toISOString(),
+            isRecurring: true,
+            ruleId: item.ruleId,
+          })
+          removeCachedPending(pendingId)
+        }
+      } else if (action === 'skip') {
+        const result = store.skipPending(pendingId)
+        if (result) {
+          store.updateLastExecuted(result.ruleId, result.dueDate)
+          removeCachedPending(pendingId)
+        }
+      } else if (action === 'reject') {
+        store.rejectPending(pendingId)
+        removeCachedPending(pendingId)
+      }
+    }
+
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handler)
+    }
+    return () => {
+      if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handler)
+      }
+    }
+  }, [])
+
+  return null
 }

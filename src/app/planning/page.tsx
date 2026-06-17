@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { CurrencyInput } from "@/components/ui/currency-input"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -16,7 +17,7 @@ import { useTransactionStore } from "@/store/useTransactionStore"
 import { usePlanningStore, type BudgetLimit, type SavingGoal } from "@/store/usePlanningStore"
 import { useAutoLogStore, type AutoLogRule, type AutoLogFrequency } from "@/store/useAutoLogStore"
 import { Check } from "lucide-react"
-import { formatCurrency } from "@/lib/format"
+import { formatCurrency, formatInputVal, parseNum } from "@/lib/format"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { motion, Variants, AnimatePresence } from "framer-motion"
 import { 
@@ -228,15 +229,6 @@ export default function PlanningPage() {
       .filter(t => t.type === 'out' && t.category.toLowerCase() === category.toLowerCase())
       .reduce((sum, t) => sum + t.amount, 0)
   }
-
-  // Formatting helpers
-  const formatInputVal = (val: string) => {
-    const clean = val.replace(/\D/g, "")
-    if (!clean) return ""
-    return new Intl.NumberFormat("id-ID").format(Number(clean))
-  }
-
-  const parseNum = (str: string) => Number(str.replace(/\D/g, "")) || 0
 
   // Budget CRUD Actions
   const handleOpenNewBudget = () => {
@@ -881,7 +873,7 @@ export default function PlanningPage() {
                     }[activeCurrency] || 'Rp'
                   }
                 </span>
-                <input 
+                <CurrencyInput
                   value={budgetLimitInput}
                   onChange={(e) => setBudgetLimitInput(formatInputVal(e.target.value))}
                   className="pl-8 h-10 w-full min-w-0 rounded-lg border border-input bg-muted/40 px-2.5 py-1 text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm dark:bg-input/30"
@@ -968,11 +960,11 @@ export default function PlanningPage() {
                        }[activeCurrency] || 'Rp'
                      }
                    </span>
-                   <input 
-                     value={goalTargetInput}
-                     onChange={(e) => setGoalTargetInput(formatInputVal(e.target.value))}
-                     className="pl-8 h-10 w-full min-w-0 rounded-lg border border-input bg-muted/40 px-2.5 py-1 text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm dark:bg-input/30"
-                   />
+                    <CurrencyInput
+                      value={goalTargetInput}
+                      onChange={(e) => setGoalTargetInput(formatInputVal(e.target.value))}
+                      className="pl-8 h-10 w-full min-w-0 rounded-lg border border-input bg-muted/40 px-2.5 py-1 text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm dark:bg-input/30"
+                    />
                  </div>
                </div>
  
@@ -990,12 +982,12 @@ export default function PlanningPage() {
                        }[activeCurrency] || 'Rp'
                      }
                    </span>
-                   <input 
-                     value={goalCollectedInput}
-                     onChange={(e) => setGoalCollectedInput(formatInputVal(e.target.value))}
-                     disabled={!isAddingGoal}
-                     className="pl-8 h-10 w-full min-w-0 rounded-lg border border-input bg-muted/40 px-2.5 py-1 text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm dark:bg-input/30"
-                   />
+                    <CurrencyInput
+                      value={goalCollectedInput}
+                      onChange={(e) => setGoalCollectedInput(formatInputVal(e.target.value))}
+                      disabled={!isAddingGoal}
+                      className="pl-8 h-10 w-full min-w-0 rounded-lg border border-input bg-muted/40 px-2.5 py-1 text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm dark:bg-input/30"
+                    />
                  </div>
                </div>
              </div>
@@ -1170,10 +1162,10 @@ export default function PlanningPage() {
                       }[activeCurrency] || 'Rp'
                     }
                   </span>
-                  <input 
+                  <CurrencyInput
                     value={ruleAmountInput}
                     onChange={(e) => setRuleAmountInput(formatInputVal(e.target.value))}
-                    className="pl-8 h-10 w-full min-w-0 rounded-lg border border-input bg-muted/40 px-2.5 py-1 text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+                    className="pl-8 h-10 w-full min-w-0 rounded-lg border border-input bg-muted/40 px-2.5 py-1 text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 md:text-sm dark:bg-input/30"
                   />
                 </div>
               </div>

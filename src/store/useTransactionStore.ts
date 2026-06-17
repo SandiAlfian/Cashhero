@@ -12,6 +12,8 @@ export interface Transaction {
   type: TransactionType
   date: string
   assetId?: string
+  isRecurring?: boolean
+  ruleId?: string
 }
 
 interface TransactionState {

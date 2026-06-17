@@ -84,6 +84,12 @@ export function usePushNotifications() {
         setFcmToken(token)
         setBackgroundPushEnabled(true)
         setLoading(false)
+        // Send token to backend for server-side FCM push
+        fetch('/api/fcm/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, lang: language, filter: 'monthly' }),
+        }).catch(() => {})
         return token
       } else {
         const msg =
@@ -118,6 +124,7 @@ export function usePushNotifications() {
   const unregisterPush = async () => {
     setLoading(true)
     setError(null)
+    const currentToken = useSettingsStore.getState().fcmToken
     try {
       const app = initializeApp(firebaseConfig)
       const messaging = getMessaging(app)
@@ -126,11 +133,18 @@ export function usePushNotifications() {
       setBackgroundPushEnabled(false)
     } catch (err: unknown) {
       console.error("FCM De-registration Error:", err)
-      // Offload anyway to ensure user can retry
       setFcmToken("")
       setBackgroundPushEnabled(false)
     } finally {
       setLoading(false)
+      // Notify backend to remove token
+      if (currentToken) {
+        fetch('/api/fcm/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: currentToken, lang: '', filter: '', remove: true }),
+        }).catch(() => {})
+      }
     }
   }
 

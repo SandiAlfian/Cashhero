@@ -7,7 +7,7 @@ export interface SettingsState {
   username: string
   email: string
   currency: MainCurrency
-  defaultHistoryFilter: 'daily' | 'weekly' | 'monthly'
+  defaultHistoryFilter: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'customPeriod'
   autoLogging: boolean
   securityPIN: boolean
   pinCode: string
@@ -24,7 +24,7 @@ export interface SettingsState {
   ratesSource: 'api' | 'offline'
   setProfile: (username: string, email: string) => void
   setCurrency: (currency: MainCurrency) => void
-  setDefaultHistoryFilter: (filter: 'daily' | 'weekly' | 'monthly') => void
+  setDefaultHistoryFilter: (filter: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'customPeriod') => void
   setAutoLogging: (enabled: boolean) => void
   setSecurityPIN: (enabled: boolean) => void
   setPinCode: (pin: string) => void

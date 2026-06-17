@@ -19,28 +19,28 @@ import { LogoIcon } from "./LogoIcon"
 
 export function MobileHeader() {
   return (
-    <header className="flex md:hidden items-center justify-between px-6 py-4 bg-sidebar border-b border-sidebar-border sticky top-0 z-30 transition-colors duration-300 no-print">
-      <div className="flex items-center gap-2 select-none">
-        <LogoIcon className="w-7 h-7 shrink-0" size={28} />
-        <span className="font-extrabold text-base tracking-tight">
-          <span className="text-[#2D2B33] dark:text-[#F3EBE1]">Cash</span>
-          <span className="text-primary font-black">Hero</span>
+    <header className="flex md:hidden items-center justify-between px-4 py-3 bg-background/80 backdrop-blur-xl border-b border-border/40 sticky top-0 z-30 transition-all duration-300 no-print">
+      <div className="flex items-center gap-2.5 select-none">
+        <LogoIcon className="w-8 h-8 shrink-0" size={32} />
+        <span className="font-bold text-base tracking-tight text-foreground">
+          Cash<span className="text-primary">Hero</span>
         </span>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1 shrink-0">
         <LanguageToggle />
         <ThemeToggle />
+        <div className="w-px h-5 bg-border/50 mx-0.5" />
         <Link
           href="/settings"
-          className="p-2 hover:bg-primary/10 dark:hover:bg-rose-950/20 rounded-lg transition-all duration-300 relative overflow-hidden"
+          className="p-2.5 hover:bg-muted rounded-xl transition-all duration-300 active:scale-95"
+          aria-label="Settings"
         >
           <motion.div
-            whileHover={{ scale: 1.15, rotate: 25 }}
+            whileHover={{ scale: 1.1, rotate: 25 }}
             whileTap={{ scale: 0.85, rotate: 180 }}
             transition={{ type: "spring", stiffness: 350, damping: 15 }}
-            className="flex items-center justify-center"
           >
-            <Settings className="w-5 h-5 text-primary/70 hover:text-primary dark:text-rose-400/80 dark:hover:text-rose-300 transition-colors" />
+            <Settings className="w-5 h-5 text-muted-foreground/70 hover:text-foreground transition-colors duration-300" />
           </motion.div>
         </Link>
       </div>

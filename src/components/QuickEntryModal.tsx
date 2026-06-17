@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { CurrencyInput } from "@/components/ui/currency-input"
 import { Button } from "@/components/ui/button"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { useLanguageStore, translations } from "@/store/useLanguageStore"
@@ -336,9 +337,8 @@ export function QuickEntryModal() {
                   }[useSettingsStore((state) => state.currency)] || 'Rp'
                 }
               </span>
-              <Input
+              <CurrencyInput
                 id="amount"
-                type="text"
                 placeholder="0"
                 value={displayAmount}
                 onChange={handleAmountChange}
