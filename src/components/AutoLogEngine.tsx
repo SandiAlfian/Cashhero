@@ -126,49 +126,11 @@ export function AutoLogEngine() {
     }
 
     // Process rules on mount
-    const newCount = processRules()
-
-    // Send notification if new pending items were created
-    if (newCount > 0) {
-      const sendNotif = async () => {
-        const pending = useAutoLogStore.getState().pendingItems
-        if (pending.length === 0) return
-        const msg = useLanguageStore.getState().language === 'id'
-          ? `${pending.length} transaksi berulang menunggu konfirmasi Anda.`
-          : `${pending.length} recurring transactions awaiting your confirmation.`
-        if (!('serviceWorker' in navigator)) return
-        const reg = await navigator.serviceWorker.ready
-        reg.active?.postMessage({
-          type: 'SHOW_LOCAL_NOTIFICATION',
-          payload: {
-            title: 'Cashhero',
-            options: { body: msg, tag: 'recurring-pending', vibrate: [200, 100, 200] }
-          }
-        })
-      }
-      sendNotif()
-    }
+    processRules()
 
     // Periodic check every 30 min while app is open
     const interval = setInterval(() => {
-      const n = processRules()
-      if (n > 0) {
-        const pending = useAutoLogStore.getState().pendingItems
-        const msg = language === 'id'
-          ? `${pending.length} transaksi berulang menunggu konfirmasi Anda.`
-          : `${pending.length} recurring transactions awaiting your confirmation.`
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.ready.then((reg) => {
-            reg.active?.postMessage({
-              type: 'SHOW_LOCAL_NOTIFICATION',
-              payload: {
-                title: 'Cashhero',
-                options: { body: msg, tag: 'recurring-pending', vibrate: [200, 100, 200] }
-              }
-            })
-          })
-        }
-      }
+      processRules()
     }, 30 * 60 * 1000)
 
     return () => clearInterval(interval)

@@ -56,11 +56,24 @@ async function checkRecurringPending() {
     const pending = useAutoLogStore.getState().pendingItems
     if (pending.length === 0) return
     const lang = useLanguageStore.getState().language as 'id' | 'en'
+
+    // Dedup: skip if already notified today
+    const today = new Date().toISOString().slice(0, 10)
+    const dedupKey = `cashhero-recurring-notified-${today}`
+    const raw = localStorage.getItem(dedupKey)
+    const notified: string[] = raw ? JSON.parse(raw) : []
+    const unseen = pending.filter(p => !notified.includes(p.id))
+    if (unseen.length === 0) return
+
+    // Mark all current pending as notified
+    const allIds = pending.map(p => p.id)
+    localStorage.setItem(dedupKey, JSON.stringify(allIds))
+
     const reg = await navigator.serviceWorker.ready
-    if (pending.length === 1) {
+    if (unseen.length === 1) {
       reg.active?.postMessage({
         type: 'SHOW_RECURRING_NOTIFICATION',
-        payload: { items: pending.map(p => ({ ...p, amount: p.amount })) }
+        payload: { items: unseen.map(p => ({ ...p, amount: p.amount })) }
       })
     } else {
       reg.active?.postMessage({
@@ -69,8 +82,8 @@ async function checkRecurringPending() {
           title: lang === 'id' ? 'Transaksi Berulang' : 'Recurring Transactions',
           options: {
             body: lang === 'id'
-              ? `${pending.length} transaksi berulang menunggu konfirmasi. Buka aplikasi untuk merespon.`
-              : `${pending.length} recurring transactions pending confirmation. Open app to respond.`,
+              ? `${unseen.length} transaksi berulang menunggu konfirmasi. Buka aplikasi untuk merespon.`
+              : `${unseen.length} recurring transactions pending confirmation. Open app to respond.`,
             tag: 'recurring-pending',
             vibrate: [200, 100, 200]
           }
