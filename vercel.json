@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/fcm/send?type=morning&key=cashhero-cron-2026",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/fcm/send?type=evening&key=cashhero-cron-2026",
+      "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/fcm/send?type=audit&key=cashhero-cron-2026",
+      "schedule": "0 2 * * 0"
+    }
+  ]
+}

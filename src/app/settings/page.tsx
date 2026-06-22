@@ -35,7 +35,6 @@ import { useSettingsStore, MainCurrency } from "@/store/useSettingsStore"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTheme } from "next-themes"
 import { usePushNotifications } from "@/hooks/usePushNotifications"
-import { playCoinSound } from "@/lib/coinSound"
 
 // Local dictionary for settings-specific strings
 const localT = {
@@ -1264,8 +1263,6 @@ export default function SettingsPage() {
                           onClick={() => {
                             if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
 
-                            playCoinSound()
-
                             triggerToast(
                               language === 'id'
                                 ? "Memproses notifikasi uji coba... Mohon tunggu."
@@ -1345,7 +1342,6 @@ export default function SettingsPage() {
                                 if (token) {
                                   // 2. Only mark as enabled if FCM registration succeeds
                                   setNotificationEnabled(true)
-                                  playCoinSound()
                                   triggerToast(
                                     language === 'id'
                                       ? 'Notifikasi pengingat pintar berhasil diaktifkan!'

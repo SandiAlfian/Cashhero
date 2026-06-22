@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     const { token, lang, filter, remove } = await req.json()
     if (!token) return NextResponse.json({ error: 'token required' }, { status: 400 })
 
-    const tokens = readTokens()
+    const tokens = await readTokens()
     const idx = tokens.findIndex(t => t.token === token)
 
     if (remove) {
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       else tokens.push(entry)
     }
 
-    writeTokens(tokens)
+    await writeTokens(tokens)
     return NextResponse.json({ ok: true })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

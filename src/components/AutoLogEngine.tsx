@@ -92,6 +92,29 @@ export function AutoLogEngine() {
   const autoLogging = useSettingsStore((s) => s.autoLogging)
   const fetchExchangeRates = useSettingsStore((s) => s.fetchExchangeRates)
   const language = useLanguageStore((s) => s.language)
+  const rules = useAutoLogStore((s) => s.rules)
+  const fcmToken = useSettingsStore((s) => s.fcmToken)
+
+  // Sync rules to Firestore when they change
+  React.useEffect(() => {
+    if (!autoLogging || !fcmToken || typeof window === 'undefined') return
+    fetch('/api/fcm/recurring/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fcmToken, rules }),
+    }).catch(() => {})
+  }, [autoLogging, fcmToken, rules])
+
+  const syncRules = React.useCallback(() => {
+    const token = useSettingsStore.getState().fcmToken
+    const currentRules = useAutoLogStore.getState().rules
+    if (!token) return
+    fetch('/api/fcm/recurring/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fcmToken: token, rules: currentRules }),
+    }).catch(() => {})
+  }, [])
 
   React.useEffect(() => {
     fetchExchangeRates()
@@ -175,16 +198,19 @@ export function AutoLogEngine() {
             ruleId: item.ruleId,
           })
           removeCachedPending(pendingId)
+          syncRules()
         }
       } else if (action === 'skip') {
         const result = store.skipPending(pendingId)
         if (result) {
           store.updateLastExecuted(result.ruleId, result.dueDate)
           removeCachedPending(pendingId)
+          syncRules()
         }
       } else if (action === 'reject') {
         store.rejectPending(pendingId)
         removeCachedPending(pendingId)
+        syncRules()
       }
     }
 

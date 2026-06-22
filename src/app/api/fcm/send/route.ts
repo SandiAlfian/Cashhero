@@ -90,7 +90,7 @@ export async function GET(req: Request) {
   }
 
   const msgs = getMessages(type)
-  const tokens = readTokens()
+  const tokens = await readTokens()
   if (tokens.length === 0) {
     return NextResponse.json({ ok: true, sent: 0, reason: 'no tokens' })
   }

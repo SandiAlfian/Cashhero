@@ -11,7 +11,7 @@ export async function GET() {
       initializeApp({ credential: cert(JSON.parse(sa)) })
     }
 
-    const tokens = readTokens()
+    const tokens = await readTokens()
     if (tokens.length === 0) return NextResponse.json({
       error: 'no registered tokens',
       hint: 'Buka halaman Settings → aktifkan notifikasi. Jika gagal, periksa VAPID key di Firebase Console → Project Settings → Cloud Messaging → Web Push certificates. Pastikan key pair cocok dengan yang ada di usePushNotifications.ts.'
