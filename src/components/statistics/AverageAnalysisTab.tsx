@@ -79,20 +79,36 @@ function getDaysInPeriod(filter: Props['filter'], startDate: string, endDate: st
   }
 }
 
-function MetricCard({ title, value, icon: Icon, colorClass, subtitle }: {
-  title: string; value: string; icon: React.ElementType; colorClass: string; subtitle?: string
+function InfoMetricCard({ title, value, icon: Icon, colorClass, secondaryValue, secondaryLabel, description, trend }: {
+  title: string; value: string; icon: React.ElementType; colorClass: string;
+  secondaryValue?: string; secondaryLabel?: string; description?: string; trend?: 'up' | 'down' | 'neutral'
 }) {
+  const trendIcon = trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→'
+  const trendColor = trend === 'up' ? 'text-green-600 dark:text-green-400' : trend === 'down' ? 'text-destructive' : 'text-muted-foreground'
   return (
     <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <div className={`p-2 rounded-full ${colorClass}`}>
+      <CardHeader className="flex flex-row items-start justify-between pb-2 gap-2">
+        <div className="flex-1 min-w-0">
+          <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+          {description && <p className="text-[10px] text-muted-foreground/60 mt-0.5 leading-relaxed">{description}</p>}
+        </div>
+        <div className={`p-2 rounded-full shrink-0 ${colorClass}`}>
           <Icon className="h-4 w-4" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-card-foreground font-number">{value}</div>
-        {subtitle && <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>}
+        <div className="text-2xl font-bold text-card-foreground font-number leading-tight">{value}</div>
+        {(secondaryValue || secondaryLabel) && (
+          <div className="flex items-baseline gap-1.5 mt-1.5 flex-wrap">
+            {secondaryValue && <span className="text-sm font-bold text-card-foreground font-number">{secondaryValue}</span>}
+            {secondaryLabel && <span className="text-[10px] text-muted-foreground/70">{secondaryLabel}</span>}
+            {trend && (
+              <span className={`text-[10px] font-bold ${trendColor} ml-auto`}>
+                {trendIcon}
+              </span>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
@@ -541,7 +557,7 @@ function AuditScorecard({ audit, language, t, suggestions }: { audit: AuditResul
   )
 }
 
-export default function AverageAnalysisTab({ filter, filteredTransactions, startDate, endDate, periodSubLabel }: Props) {
+export default function AverageAnalysisTab({ filter, filteredTransactions, startDate, endDate, periodSubLabel: _periodSubLabel }: Props) {
   const language = useLanguageStore((s) => s.language)
   const budgets = usePlanningStore((s) => s.budgets)
   const t = (key: string) => (translations[language] as Record<string, string>)[key] || key
@@ -669,6 +685,10 @@ export default function AverageAnalysisTab({ filter, filteredTransactions, start
 
     const totalScore = Math.min(100, Math.round(savingsRateScore + budgetComplianceScore + volatilityScore))
 
+    const dailyAvgIncome = dayCount > 0 ? totalIncome / dayCount : 0
+    const dailyAvgExpense = dayCount > 0 ? totalExpense / dayCount : 0
+    const expenseRatio = totalIncome > 0 ? (totalExpense / totalIncome) * 100 : 0
+
     return {
       avgTxValue,
       savingsRate,
@@ -676,6 +696,9 @@ export default function AverageAnalysisTab({ filter, filteredTransactions, start
       dayCount,
       totalIncome,
       totalExpense,
+      dailyAvgIncome,
+      dailyAvgExpense,
+      expenseRatio,
       categoryData: budgetedCategories,
       unbudgetedCategories,
       auditResult: {
@@ -826,35 +849,56 @@ export default function AverageAnalysisTab({ filter, filteredTransactions, start
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="flex flex-col gap-8">
-      {/* Premium Metric Cards */}
+      {/* Premium Metric Cards — enriched with context */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
+        <InfoMetricCard
           title={t('averageMonthlyIncome')}
           value={formatCurrency(computed.totalIncome, language as 'id' | 'en')}
           icon={TrendingUp}
           colorClass="bg-green-500/10 text-green-600 dark:text-green-400"
-          subtitle={periodSubLabel}
+          secondaryValue={formatCurrency(computed.dailyAvgIncome, language as 'id' | 'en')}
+          secondaryLabel={language === 'id' ? '/hari rata-rata' : '/day avg'}
+          description={language === 'id'
+            ? 'Total pemasukan dari semua transaksi masuk periode ini'
+            : 'Total income from all incoming transactions this period'}
+          trend={computed.totalIncome > 0 ? 'up' : 'neutral'}
         />
-        <MetricCard
+        <InfoMetricCard
           title={t('averageMonthlyExpense')}
           value={formatCurrency(computed.totalExpense, language as 'id' | 'en')}
           icon={Wallet}
           colorClass="bg-destructive/10 text-destructive"
-          subtitle={periodSubLabel}
+          secondaryValue={formatCurrency(computed.dailyAvgExpense, language as 'id' | 'en')}
+          secondaryLabel={language === 'id'
+            ? `/hari · ${computed.expenseRatio.toFixed(0)}% dr pemasukan`
+            : `/day · ${computed.expenseRatio.toFixed(0)}% of income`}
+          description={language === 'id'
+            ? 'Total pengeluaran dari semua transaksi keluar periode ini'
+            : 'Total expenses from all outgoing transactions this period'}
+          trend={computed.expenseRatio > 80 ? 'down' : computed.expenseRatio > 50 ? 'neutral' : 'up'}
         />
-        <MetricCard
+        <InfoMetricCard
           title={t('averageTransactionValue')}
           value={formatCurrency(computed.avgTxValue, language as 'id' | 'en')}
           icon={DollarSign}
           colorClass="bg-blue-500/10 text-blue-600 dark:text-blue-400"
-          subtitle={`${computed.totalTxCount} ${t('totalTransactions')}`}
+          secondaryValue={`${computed.totalTxCount}×`}
+          secondaryLabel={language === 'id' ? 'total transaksi dicatat' : 'total transactions recorded'}
+          description={language === 'id'
+            ? 'Rata-rata nominal per transaksi (pemasukan & pengeluaran)'
+            : 'Average amount per transaction (income & expenses)'}
         />
-        <MetricCard
+        <InfoMetricCard
           title={t('avgMonthlySavings')}
-          value={formatCurrency(computed.totalIncome - computed.totalExpense, language as 'id' | 'en')}
+          value={`${(computed.totalIncome - computed.totalExpense) >= 0 ? '+' : ''}${formatCurrency(computed.totalIncome - computed.totalExpense, language as 'id' | 'en')}`}
           icon={PiggyBank}
           colorClass="bg-purple-500/10 text-purple-600 dark:text-purple-400"
-          subtitle={`${t('rateLabel')}: ${computed.savingsRate.toFixed(1)}%`}
+          secondaryValue={`${computed.savingsRate.toFixed(1)}%`}
+          secondaryLabel={language === 'id' ? 'rasio tabungan' : 'savings rate'}
+          description={language === 'id'
+            ? 'Sisa pemasukan setelah dikurangi pengeluaran periode ini'
+            : 'Remaining income after deducting expenses this period'}
+          trend={computed.savingsRate >= 25 ? 'up' : computed.savingsRate > 0 ? 'neutral' : 'down'}
         />
       </div>
 
