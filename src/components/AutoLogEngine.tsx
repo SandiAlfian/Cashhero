@@ -95,15 +95,7 @@ export function AutoLogEngine() {
   const rules = useAutoLogStore((s) => s.rules)
   const fcmToken = useSettingsStore((s) => s.fcmToken)
 
-  // Sync rules to Firestore when they change
-  React.useEffect(() => {
-    if (!autoLogging || !fcmToken || typeof window === 'undefined') return
-    fetch('/api/fcm/recurring/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fcmToken, rules }),
-    }).catch(() => {})
-  }, [autoLogging, fcmToken, rules])
+  const reconciled = React.useRef(false)
 
   const syncRules = React.useCallback(() => {
     const token = useSettingsStore.getState().fcmToken
@@ -116,6 +108,80 @@ export function AutoLogEngine() {
     }).catch(() => {})
   }, [])
 
+  // Sync rules to Firestore (blocked until reconciled with server)
+  React.useEffect(() => {
+    if (!reconciled.current) return
+    if (!autoLogging || !fcmToken || typeof window === 'undefined') return
+    fetch('/api/fcm/recurring/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fcmToken, rules }),
+    }).catch(() => {})
+  }, [autoLogging, fcmToken, rules])
+
+  // Reconcile local rules with Firestore on mount (handles actions taken while app was closed)
+  React.useEffect(() => {
+    if (!autoLogging || !fcmToken) {
+      reconciled.current = true
+      return
+    }
+
+    // Clean up SW fallback hash URL
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash
+      if (hash.startsWith('#recurring-action=')) {
+        window.history.replaceState(null, '', '/')
+      }
+    }
+
+    let cancelled = false
+    fetch('/api/fcm/recurring/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fcmToken }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data.rules || !Array.isArray(data.rules)) return
+        const store = useAutoLogStore.getState()
+        let changed = false
+        const merged = store.rules.map((local) => {
+          interface ServerRule { id: string; lastExecutedDate?: string | null; isActive?: boolean }
+          const server = (data.rules as ServerRule[]).find((r) => r.id === local.id)
+          if (!server) return local
+          if (server.lastExecutedDate !== local.lastExecutedDate || server.isActive !== local.isActive) {
+            changed = true
+          }
+          return {
+            ...local,
+            lastExecutedDate: server.lastExecutedDate ?? local.lastExecutedDate,
+            isActive: server.isActive ?? local.isActive,
+          }
+        })
+        if (changed) {
+          useAutoLogStore.setState({ rules: merged })
+          const validPending = store.pendingItems.filter((p) => {
+            const rule = merged.find((r) => r.id === p.ruleId)
+            if (!rule || !rule.isActive) return false
+            if (rule.lastExecutedDate && p.dueDate <= rule.lastExecutedDate) return false
+            return true
+          })
+          if (validPending.length !== store.pendingItems.length) {
+            useAutoLogStore.setState({ pendingItems: validPending })
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (cancelled) return
+        reconciled.current = true
+        processRules()
+        syncRules()
+      })
+
+    return () => { cancelled = true }
+  }, [autoLogging, fcmToken, syncRules])
+
   React.useEffect(() => {
     fetchExchangeRates()
     if (!autoLogging) return
@@ -125,15 +191,17 @@ export function AutoLogEngine() {
       navigator.serviceWorker.register('/sw.js').catch(() => {})
     }
 
-    // Process rules on mount
-    processRules()
-
     // Periodic check every 30 min while app is open
     const interval = setInterval(() => {
       processRules()
     }, 30 * 60 * 1000)
 
-    return () => clearInterval(interval)
+    // Refresh exchange rates every 60 min
+    const ratesInterval = setInterval(() => {
+      fetchExchangeRates()
+    }, 60 * 60 * 1000)
+
+    return () => { clearInterval(interval); clearInterval(ratesInterval) }
   }, [autoLogging, fetchExchangeRates, language])
 
   // Listen for recurring action results from SW
@@ -184,7 +252,7 @@ export function AutoLogEngine() {
         navigator.serviceWorker.removeEventListener('message', handler)
       }
     }
-  }, [])
+  }, [syncRules])
 
   return null
 }

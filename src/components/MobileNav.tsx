@@ -10,6 +10,7 @@ import {
   TrendingUp,
   Calendar,
   History,
+  Handshake,
   Settings
 } from "lucide-react"
 import { useLanguageStore, translations } from "@/store/useLanguageStore"
@@ -127,12 +128,17 @@ export function MobileBottomBar() {
       label: language === 'id' ? 'Riwayat' : 'History',
       icon: History,
     },
+    {
+      href: "/piutang",
+      label: language === 'id' ? 'Piutang' : 'Receivables',
+      icon: Handshake,
+    },
   ]
 
   if (!mounted) return null
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-background/80 backdrop-blur-lg border-t border-border/80 px-2 py-2.5 pb-safe grid grid-cols-5 justify-items-center items-center no-print shadow-[0_-4px_16px_rgba(0,0,0,0.05)] transition-all duration-300">
+    <div className="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-background/80 backdrop-blur-lg border-t border-border/80 px-2 py-2.5 pb-safe grid grid-cols-6 justify-items-center items-center no-print shadow-[0_-4px_16px_rgba(0,0,0,0.05)] transition-all duration-300">
       {items.map((item) => {
         const isActive = pathname === item.href
         const Icon = item.icon

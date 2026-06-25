@@ -1,21 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { initializeApp } from "firebase/app"
-import { getMessaging, getToken, deleteToken } from "firebase/messaging"
+import { getToken, deleteToken } from "firebase/messaging"
+import { getFirebaseMessaging } from "@/lib/firebase"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { useLanguageStore } from "@/store/useLanguageStore"
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBTBuTd-ddbCjebkhcXlwhi8wBD5A9IX4Q",
-  authDomain: "cashhero-1ccbc.firebaseapp.com",
-  projectId: "cashhero-1ccbc",
-  storageBucket: "cashhero-1ccbc.firebasestorage.app",
-  messagingSenderId: "274124067625",
-  appId: "1:274124067625:web:5b043631a016f5c672dd38"
-}
-
-const VAPID_KEY = "BH8k7LCG2K_wuiCDY0FfiwStzEbb0J-w2J9Blpf_munQ9-YenxM-HXJ6nGaVcgduNPTijUr8Dz1117uBaCWBAOw"
+const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || "BH8k7LCG2K_wuiCDY0FfiwStzEbb0J-w2J9Blpf_munQ9-YenxM-HXJ6nGaVcgduNPTijUr8Dz1117uBaCWBAOw"
 
 export function usePushNotifications() {
   const language = useLanguageStore((state) => state.language)
@@ -70,12 +61,8 @@ export function usePushNotifications() {
       // 2. Wait for Service Worker to be ready
       const registration = await navigator.serviceWorker.ready
 
-      // 3. Initialize Firebase App
-      const app = initializeApp(firebaseConfig)
-      const messaging = getMessaging(app)
-
-      // 4. Get FCM token passing the VAPID key and custom SW registration
-      const token = await getToken(messaging, {
+      // 3. Get FCM token passing the VAPID key and custom SW registration
+      const token = await getToken(getFirebaseMessaging()!, {
         vapidKey: VAPID_KEY,
         serviceWorkerRegistration: registration,
       })
@@ -107,8 +94,8 @@ export function usePushNotifications() {
       let friendlyMsg
       if (errorMsg.includes("applicationServerKey") || errorMsg.includes("VAPID") || errorMsg.includes("applicationServerKey is not valid")) {
         friendlyMsg = language === "id"
-          ? "Kunci server notifikasi (VAPID Key) tidak valid. Buka Firebase Console → Project Settings → Cloud Messaging → Web Push certificates, salin Key Pair ke usePushNotifications.ts baris 18."
-          : "VAPID Key invalid. Go to Firebase Console → Project Settings → Cloud Messaging → Web Push certificates, copy the Key Pair into usePushNotifications.ts line 18."
+          ? "Kunci server notifikasi (VAPID Key) tidak valid. Buka Firebase Console → Project Settings → Cloud Messaging → Web Push certificates, salin Key Pair ke .env.local sebagai NEXT_PUBLIC_FIREBASE_VAPID_KEY."
+          : "VAPID Key invalid. Go to Firebase Console → Project Settings → Cloud Messaging → Web Push certificates, copy the Key Pair into .env.local as NEXT_PUBLIC_FIREBASE_VAPID_KEY."
       } else if (errorMsg.includes("messaging/unsupported-browser") || errorMsg.includes("unable to subscribe")) {
         friendlyMsg = language === "id"
           ? "Browser ini tidak mendukung push subscription. Coba Chrome atau Edge terbaru."
@@ -130,9 +117,7 @@ export function usePushNotifications() {
     setError(null)
     const currentToken = useSettingsStore.getState().fcmToken
     try {
-      const app = initializeApp(firebaseConfig)
-      const messaging = getMessaging(app)
-      await deleteToken(messaging)
+      await deleteToken(getFirebaseMessaging()!)
       setFcmToken("")
       setBackgroundPushEnabled(false)
     } catch (err: unknown) {

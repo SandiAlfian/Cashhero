@@ -1,4 +1,4 @@
-import { Language } from "@/store/useLanguageStore"
+import { Language, translations } from "@/store/useLanguageStore"
 import { useSettingsStore, EXCHANGE_RATES, type MainCurrency } from "@/store/useSettingsStore"
 
 export const CURRENCY_SYMBOLS: Record<MainCurrency, string> = {
@@ -106,4 +106,9 @@ export const formatRelativeDate = (dateString: string, lang: Language): string =
   } else {
     return `${diffDays} days ago`
   }
+}
+
+export function getTranslation(language: Language, key: string): string {
+  const dict = (translations[language] || translations['id']) as Record<string, string>
+  return dict[key] || (translations['id'] as Record<string, string>)[key]
 }

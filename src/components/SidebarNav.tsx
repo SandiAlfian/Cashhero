@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
-import { LayoutDashboard, History, PiggyBank, TrendingUp, Calendar } from "lucide-react"
+import { LayoutDashboard, History, PiggyBank, TrendingUp, Calendar, Handshake } from "lucide-react"
 import { useLanguageStore, translations } from "@/store/useLanguageStore"
 import * as React from "react"
 
@@ -36,6 +36,11 @@ export function SidebarNav({ isCollapsed = false }: { isCollapsed?: boolean }) {
       href: "/statistics",
       label: t('statistics'),
       icon: TrendingUp,
+    },
+    {
+      href: "/piutang",
+      label: t('piutang'),
+      icon: Handshake,
     },
     {
       href: "/calendar",

@@ -1,10 +1,45 @@
 import { NextResponse } from 'next/server'
 import { getApps, initializeApp, cert } from 'firebase-admin/app'
 import { getMessaging } from 'firebase-admin/messaging'
-import { readTokens } from '@/lib/fcm-tokens'
+import { getFirestore } from 'firebase-admin/firestore'
+import type { AutoLogRule } from '@/store/useAutoLogStore'
 import { getAllActiveRules, computeDueItems, markPendingNotified } from '@/lib/recurringRules'
+import { readTokens } from '@/lib/fcm-tokens'
 
 const CRON_SECRET = process.env.CRON_SECRET
+const PENDING_COLLECTION = 'recurring_pending'
+
+function getDb() {
+  if (getApps().length) return getFirestore()
+  const sa = process.env.FCM_SERVICE_ACCOUNT
+  if (!sa) return null
+  try {
+    initializeApp({ credential: cert(JSON.parse(sa)) })
+    return getFirestore()
+  } catch {
+    return null
+  }
+}
+
+async function filterAlreadyNotified(items: { rule: AutoLogRule; dueDate: string }[], fcmToken: string): Promise<{ rule: AutoLogRule; dueDate: string }[]> {
+  const db = getDb()
+  if (!db) return items
+  const today = new Date().toISOString().slice(0, 10)
+  const result: typeof items = []
+  for (const item of items) {
+    const pendingId = `${item.rule.id}-${item.dueDate}`
+    try {
+      const doc = await db.collection(PENDING_COLLECTION).doc(`${fcmToken}_${pendingId}`).get()
+      if (doc.exists) {
+        const data = doc.data()
+        // Skip if already notified today
+        if (data?.notifiedAt?.startsWith(today)) continue
+      }
+    } catch { /* skip check */ }
+    result.push(item)
+  }
+  return result
+}
 
 function initAdmin() {
   if (getApps().length) return getMessaging()
@@ -32,7 +67,11 @@ export async function GET(req: Request) {
 
     for (const { fcmToken, rules } of allRules) {
       if (!tokenSet.has(fcmToken)) continue
-      const items = computeDueItems(rules)
+      let items = computeDueItems(rules)
+      if (items.length === 0) continue
+
+      // Skip items already notified today (dedup)
+      items = await filterAlreadyNotified(items, fcmToken)
       if (items.length === 0) continue
 
       total += items.length

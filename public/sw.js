@@ -319,20 +319,6 @@ self.addEventListener('message', (event) => {
   }
 })
 
-// ── Push Notification (jika menggunakan server backend FCM/WebPush) ───────────
-self.addEventListener('push', (event) => {
-  const data = event.data?.json() ?? {}
-  const title = data.title || 'Cashhero'
-  const body = data.body || 'Ada notifikasi baru dari Cashhero.'
-
-  self.registration.showNotification(title, {
-    body,
-    icon: '/cashhero-logo-192.png',
-    badge: '/cashhero-logo-192.png',
-    tag: 'cashhero-notification',
-  })
-})
-
 // ── Notification Click ─────────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
   const notifData = event.notification.data || {}
