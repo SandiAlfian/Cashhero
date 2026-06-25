@@ -4,7 +4,7 @@ import * as React from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { LogOut, CloudUpload, CloudDownload, RefreshCw, AlertCircle, CheckCircle2, UserRoundCheck, ShieldAlert } from "lucide-react"
+import { LogOut, CloudUpload, CloudDownload, RefreshCw, AlertCircle, CheckCircle2, UserRoundCheck } from "lucide-react"
 import { useLanguageStore } from "@/store/useLanguageStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { useTransactionStore } from "@/store/useTransactionStore"
@@ -27,7 +27,6 @@ export function SyncAccountCard({ triggerToast }: { triggerToast: (msg: string) 
   const setProfile = useSettingsStore((s) => s.setProfile)
   const { user, lastSyncAt, isSyncing, setUser, setLastSyncAt, setIsSyncing, logout } = useAuthStore()
   const [backupExists, setBackupExists] = React.useState(false)
-  const [backupDate, setBackupDate] = React.useState<string | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [showRestoreModal, setShowRestoreModal] = React.useState(false)
   const [restoreLoading, setRestoreLoading] = React.useState(false)
@@ -91,10 +90,10 @@ export function SyncAccountCard({ triggerToast }: { triggerToast: (msg: string) 
       const restoreData = await restoreRes.json()
       if (restoreData.exists) {
         setBackupExists(true)
-        setBackupDate(restoreData.data.backedUpAt)
       }
-    } catch (e: any) {
-      if (e?.code === 'auth/popup-closed-by-user' || e?.code === 'auth/cancelled-popup-request') {
+    } catch (e: unknown) {
+      const err = e as { code?: string }
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
         setError(t('popupBlocked'))
       } else {
         setError(t('syncError'))
@@ -109,7 +108,7 @@ export function SyncAccountCard({ triggerToast }: { triggerToast: (msg: string) 
     setError(null)
     try {
       const settingsState = useSettingsStore.getState()
-      const { fcmToken: _, exchangeRates: __, lastRatesUpdate: ___, ratesSource: ____, fetchExchangeRates: _____, resetAllData: ______, ...safeSettings } = settingsState
+      const { fcmToken, exchangeRates, lastRatesUpdate, ratesSource, fetchExchangeRates, resetAllData, ...safeSettings } = settingsState
 
       const payload = {
         transactions: useTransactionStore.getState().transactions,
@@ -130,7 +129,6 @@ export function SyncAccountCard({ triggerToast }: { triggerToast: (msg: string) 
       const data = await res.json()
       setLastSyncAt(data.backedUpAt)
       setBackupExists(true)
-      setBackupDate(data.backedUpAt)
       triggerToast(t('backupSuccess'))
     } catch {
       setError(t('syncError'))
@@ -182,7 +180,6 @@ export function SyncAccountCard({ triggerToast }: { triggerToast: (msg: string) 
     } catch { /* ignore */ }
     logout()
     setBackupExists(false)
-    setBackupDate(null)
     setError(null)
   }
 

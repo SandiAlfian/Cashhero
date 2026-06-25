@@ -8,13 +8,13 @@ import { useAuthStore } from "@/store/useAuthStore"
 
 interface BackupData {
   backedUpAt: string | null
-  transactions: any[]
-  settings: any
-  budgets: any[]
-  goals: any[]
-  autoLogRules: any[]
-  trackedOutflows: any[]
-  portfolioAssets: any[]
+  transactions: unknown[]
+  settings: Record<string, unknown> | null
+  budgets: unknown[]
+  goals: unknown[]
+  autoLogRules: unknown[]
+  trackedOutflows: unknown[]
+  portfolioAssets: unknown[]
 }
 
 interface DataRow {
@@ -82,8 +82,6 @@ export function RestoreDetailModal({ open, onOpenChange, loading, onApplyData }:
       { icon: TrendingUp, labelKey: 'portfolioAssets', count: backupData.portfolioAssets?.length ?? 0 },
     ]
   }, [backupData])
-
-  const totalItems = dataRows.reduce((sum, r) => sum + r.count, 0)
 
   const formatSyncTime = (iso: string | null) => {
     if (!iso) return null

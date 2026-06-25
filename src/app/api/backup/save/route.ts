@@ -42,7 +42,8 @@ export async function POST(req: Request) {
     })
 
     return NextResponse.json({ ok: true, backedUpAt: new Date().toISOString() })
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Backup failed' }, { status: 500 })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Backup failed'
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

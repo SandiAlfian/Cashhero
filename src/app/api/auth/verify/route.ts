@@ -20,7 +20,8 @@ export async function POST(req: Request) {
       name: decoded.name || decoded.email?.split('@')[0] || 'User',
       picture: decoded.picture || '',
     })
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Invalid token' }, { status: 401 })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Invalid token'
+    return NextResponse.json({ error: msg }, { status: 401 })
   }
 }

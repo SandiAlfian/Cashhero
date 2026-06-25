@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "framer-motion"
-import { User, Edit3, Save, CheckCircle2, CloudUpload, CloudDownload, RefreshCw, LogOut, AlertCircle, UserRoundCheck, ShieldAlert } from "lucide-react"
+import { User, Edit3, Save, CheckCircle2, CloudUpload, CloudDownload, RefreshCw, LogOut, AlertCircle, UserRoundCheck } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useLanguageStore } from "@/store/useLanguageStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
@@ -31,14 +31,13 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
   const username = useSettingsStore((state) => state.username)
   const email = useSettingsStore((state) => state.email)
   const setProfile = useSettingsStore((state) => state.setProfile)
-  const { user, lastSyncAt, isSyncing, setUser, setLastSyncAt, setIsSyncing, logout } = useAuthStore()
+  const { user, lastSyncAt, isSyncing, setUser, setLastSyncAt, logout } = useAuthStore()
 
   const [mounted, setMounted] = React.useState(false)
   const [isEditingProfile, setIsEditingProfile] = React.useState(false)
   const [nameInput, setNameInput] = React.useState("")
   const [emailInput, setEmailInput] = React.useState("")
   const [backupExists, setBackupExists] = React.useState(false)
-  const [backupDate, setBackupDate] = React.useState<string | null>(null)
   const [error, setError] = React.useState<string | null>(null)
   const [showBackupModal, setShowBackupModal] = React.useState(false)
   const [showRestoreModal, setShowRestoreModal] = React.useState(false)
@@ -97,10 +96,10 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
       const restoreData = await restoreRes.json()
       if (restoreData.exists) {
         setBackupExists(true)
-        setBackupDate(restoreData.data.backedUpAt)
       }
-    } catch (e: any) {
-      if (e?.code === 'auth/popup-closed-by-user' || e?.code === 'auth/cancelled-popup-request') {
+    } catch (e: unknown) {
+      const err = e as { code?: string }
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
         setError(language === 'id' ? 'Popup ditutup atau diblokir. Izinkan popup untuk situs ini.' : 'Popup closed or blocked. Allow popups for this site.')
       } else {
         setError(language === 'id' ? 'Gagal menyinkronkan. Coba lagi.' : 'Sync failed. Please try again.')
@@ -116,7 +115,7 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
     setError(null)
     try {
       const settingsState = useSettingsStore.getState()
-      const { fcmToken: _, exchangeRates: __, lastRatesUpdate: ___, ratesSource: ____, fetchExchangeRates: _____, resetAllData: ______, ...safeSettings } = settingsState
+      const { fcmToken, exchangeRates, lastRatesUpdate, ratesSource, fetchExchangeRates, resetAllData, ...safeSettings } = settingsState
 
       const payload = {
         transactions: useTransactionStore.getState().transactions,
@@ -137,7 +136,6 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
       const data = await res.json()
       setLastSyncAt(data.backedUpAt)
       setBackupExists(true)
-      setBackupDate(data.backedUpAt)
       triggerToast(language === 'id' ? 'Data berhasil dicadangkan ke cloud!' : 'Data backed up to cloud successfully!')
     } catch {
       setError(language === 'id' ? 'Gagal menyinkronkan. Coba lagi.' : 'Sync failed. Please try again.')
@@ -146,7 +144,7 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
     }
   }
 
-  const handleRestoreConfirm = async (backupData: any) => {
+  const handleRestoreConfirm = async (backupData: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     setRestoreLoading(true)
     try {
       const d = backupData
@@ -174,7 +172,6 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
     } catch { /* ignore */ }
     logout()
     setBackupExists(false)
-    setBackupDate(null)
     setError(null)
   }
 

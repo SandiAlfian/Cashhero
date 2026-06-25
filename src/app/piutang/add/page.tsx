@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { ArrowLeft, Tag } from "lucide-react"
+import { ArrowLeft, Plus, Tag } from "lucide-react"
 import { useLanguageStore } from "@/store/useLanguageStore"
 import { useTrackedOutflowsStore, JENIS_OPTIONS } from "@/store/useTrackedOutflowsStore"
 import { parseNum, formatInputVal, getTranslation, CURRENCY_SYMBOLS } from "@/lib/format"

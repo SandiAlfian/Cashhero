@@ -44,7 +44,8 @@ export async function POST(req: Request) {
         portfolioAssets: data?.portfolioAssets || [],
       },
     })
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Restore failed' }, { status: 500 })
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : 'Restore failed'
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
