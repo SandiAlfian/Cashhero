@@ -13,10 +13,12 @@ interface AuthState {
   idToken: string
   lastSyncAt: string | null
   isSyncing: boolean
+  backupAvailable: boolean
   setUser: (user: AuthUser | null, idToken?: string) => void
   setIdToken: (token: string) => void
   setLastSyncAt: (date: string) => void
   setIsSyncing: (syncing: boolean) => void
+  setBackupAvailable: (available: boolean) => void
   logout: () => void
 }
 
@@ -27,6 +29,7 @@ export const useAuthStore = create<AuthState>()(
       idToken: '',
       lastSyncAt: null,
       isSyncing: false,
+      backupAvailable: false,
 
       setUser: (user, idToken) =>
         set({ user, idToken: idToken ?? '' }),
@@ -37,7 +40,9 @@ export const useAuthStore = create<AuthState>()(
 
       setIsSyncing: (syncing) => set({ isSyncing: syncing }),
 
-      logout: () => set({ user: null, idToken: '', lastSyncAt: null }),
+      setBackupAvailable: (available) => set({ backupAvailable: available }),
+
+      logout: () => set({ user: null, idToken: '', lastSyncAt: null, backupAvailable: false }),
     }),
     { name: 'cashhero-auth-store' }
   )

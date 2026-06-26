@@ -31,13 +31,12 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
   const username = useSettingsStore((state) => state.username)
   const email = useSettingsStore((state) => state.email)
   const setProfile = useSettingsStore((state) => state.setProfile)
-  const { user, lastSyncAt, isSyncing, setUser, setLastSyncAt, logout } = useAuthStore()
+  const { user, lastSyncAt, isSyncing, backupAvailable, setUser, setLastSyncAt, setBackupAvailable, logout } = useAuthStore()
 
   const [mounted, setMounted] = React.useState(false)
   const [isEditingProfile, setIsEditingProfile] = React.useState(false)
   const [nameInput, setNameInput] = React.useState("")
   const [emailInput, setEmailInput] = React.useState("")
-  const [backupExists, setBackupExists] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [showBackupModal, setShowBackupModal] = React.useState(false)
   const [showRestoreModal, setShowRestoreModal] = React.useState(false)
@@ -49,6 +48,23 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
     setNameInput(username)
     setEmailInput(email)
   }, [username, email])
+
+  // Check backup availability on mount when user is logged in
+  React.useEffect(() => {
+    if (!user || !useAuthStore.getState().idToken) return
+    let cancelled = false
+    const token = useAuthStore.getState().idToken
+    fetch('/api/backup/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setBackupAvailable(!!data.exists)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const t = React.useCallback((key: keyof typeof localT['id']) => {
     if (!mounted) return localT['id'][key]
@@ -114,9 +130,7 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       })
       const restoreData = await restoreRes.json()
-      if (restoreData.exists) {
-        setBackupExists(true)
-      }
+      setBackupAvailable(!!restoreData.exists)
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string }
       setError(err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request'
@@ -156,7 +170,7 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
       }
       const data = await res.json()
       setLastSyncAt(data.backedUpAt)
-      setBackupExists(true)
+      setBackupAvailable(true)
       triggerToast(language === 'id' ? 'Data berhasil dicadangkan ke cloud!' : 'Data backed up to cloud successfully!')
     } catch (e) {
       setError(friendlyError((e as Error)?.message || ''))
@@ -176,6 +190,18 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
       if (d.autoLogRules) useAutoLogStore.setState({ rules: d.autoLogRules })
       if (d.trackedOutflows) useTrackedOutflowsStore.setState({ items: d.trackedOutflows })
       if (d.portfolioAssets) usePortfolioStore.setState({ assets: d.portfolioAssets })
+      // Force persist to localStorage so data survives page navigation
+      const stores = [
+        { store: useSettingsStore, key: 'cashhero-settings' },
+        { store: useTransactionStore, key: 'cashhero-transactions' },
+        { store: usePlanningStore, key: 'cashhero-planning-persistent' },
+        { store: useAutoLogStore, key: 'cashhero-autolog-store' },
+        { store: useTrackedOutflowsStore, key: 'cashhero-tracked-outflows' },
+        { store: usePortfolioStore, key: 'cashhero-portfolio-dynamic-v2' },
+      ]
+      stores.forEach(({ store, key }) => {
+        try { localStorage.setItem(key, JSON.stringify(store.getState())) } catch { /* ignore */ }
+      })
       setLastSyncAt(d.backedUpAt)
       setShowRestoreModal(false)
       triggerToast(language === 'id' ? 'Data berhasil dipulihkan dari cloud!' : 'Data restored from cloud successfully!')
@@ -192,7 +218,6 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
       await auth.signOut()
     } catch { /* ignore */ }
     logout()
-    setBackupExists(false)
     setError(null)
   }
 
@@ -330,8 +355,8 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
                             : (lastSyncAt ? formatSyncTime(lastSyncAt) : (language === 'id' ? 'Belum pernah' : 'Never'))
                           }
                         </span>
-                        <span className={`flex items-center gap-1 font-semibold ${backupExists ? 'text-emerald-500' : 'text-muted-foreground'}`}>
-                          {backupExists ? (
+                        <span className={`flex items-center gap-1 font-semibold ${backupAvailable ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                          {backupAvailable ? (
                             <><CheckCircle2 className="w-2.5 h-2.5" /> {language === 'id' ? 'Cadangan tersedia' : 'Backup available'}</>
                           ) : (
                             <><CloudUpload className="w-2.5 h-2.5" /> {language === 'id' ? 'Belum ada cadangan' : 'No backup yet'}</>
@@ -355,7 +380,7 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
                         </button>
                         <button
                           onClick={() => setShowRestoreModal(true)}
-                          disabled={isSyncing || !backupExists}
+                          disabled={isSyncing || !backupAvailable}
                           className="flex-1 inline-flex items-center justify-center gap-1.5 bg-muted/20 hover:bg-muted/40 border border-border/40 text-foreground py-2.5 px-3 rounded-xl font-bold text-[11px] transition-all duration-200 cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed select-none active:scale-[0.97]"
                         >
                           <CloudDownload className="w-3.5 h-3.5" />
