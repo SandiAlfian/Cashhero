@@ -158,7 +158,30 @@ export function SyncAccountCard({ triggerToast }: { triggerToast: (msg: string) 
         if (d.budgets) usePlanningStore.setState({ budgets: d.budgets })
         if (d.goals) usePlanningStore.setState({ goals: d.goals })
         if (d.autoLogRules) useAutoLogStore.setState({ rules: d.autoLogRules })
-        if (d.trackedOutflows) useTrackedOutflowsStore.setState({ items: d.trackedOutflows })
+        if (d.trackedOutflows) {
+          useTrackedOutflowsStore.setState({ items: d.trackedOutflows })
+        } else if (d.transactions) {
+          const piutangTx = d.transactions.filter(
+            (tx: any) => tx.type === 'out' && tx.category?.toLowerCase().includes('piutang')
+          )
+          if (piutangTx.length > 0) {
+            const migrated = piutangTx.map((tx: any) => ({
+              id: crypto.randomUUID(),
+              jenis: 'piutang',
+              personName: tx.note || tx.category,
+              amount: tx.amount,
+              remainingAmount: tx.amount,
+              date: tx.date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+              dueDate: '',
+              note: `${tx.category}${tx.note && tx.note !== tx.category ? ' \u2014 ' + tx.note : ''}`,
+              status: 'active' as const,
+              repayments: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }))
+            useTrackedOutflowsStore.setState({ items: migrated })
+          }
+        }
         if (d.portfolioAssets) usePortfolioStore.setState({ assets: d.portfolioAssets })
         setLastSyncAt(d.backedUpAt)
         triggerToast(t('restoreSuccess'))

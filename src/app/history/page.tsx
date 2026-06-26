@@ -12,8 +12,10 @@ import { filterTransactionsByPeriod, buildWeeklyGroups, buildMonthlyGroups, buil
 import { FilterBar } from "@/components/history/FilterBar"
 import { TransactionTable } from "@/components/history/TransactionTable"
 import { DrillDownModal } from "@/components/history/DrillDownModal"
+import { EditTransactionDialog } from "@/components/history/EditTransactionDialog"
 import { ExportButtons } from "@/components/history/ExportButtons"
 import { GroupedPeriodTable } from "@/components/history/GroupedPeriodTable"
+import type { Transaction } from "@/store/useTransactionStore"
 
 export default function HistoryPage() {
   const transactions = useTransactionStore((state) => state.transactions)
@@ -38,6 +40,7 @@ export default function HistoryPage() {
   })
 
   const [selectedGroupId, setSelectedGroupId] = React.useState<string | null>(null)
+  const [editingTx, setEditingTx] = React.useState<Transaction | null>(null)
 
   React.useEffect(() => {
     setMounted(true)
@@ -165,6 +168,7 @@ export default function HistoryPage() {
                   t={t}
                   onDeleteTransaction={deleteTransaction}
                   onTriggerToast={triggerToast}
+                  onEditTransaction={setEditingTx}
                 />
               )}
 
@@ -184,6 +188,14 @@ export default function HistoryPage() {
         t={t}
         onDeleteTransaction={deleteTransaction}
         onTriggerToast={triggerToast}
+        onEditTransaction={setEditingTx}
+      />
+
+      <EditTransactionDialog
+        transaction={editingTx}
+        open={editingTx !== null}
+        onOpenChange={(open) => { if (!open) setEditingTx(null) }}
+        onToast={triggerToast}
       />
 
       <AnimatePresence>

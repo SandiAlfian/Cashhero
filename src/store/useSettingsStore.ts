@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useAuthStore } from './useAuthStore'
 
 export type MainCurrency = 'IDR' | 'USD' | 'EUR' | 'SGD' | 'JPY'
 
@@ -43,10 +44,10 @@ export interface SettingsState {
 // Fixed Exchange Rates relative to IDR (Base currency is always stored in IDR)
 export const EXCHANGE_RATES: Record<MainCurrency, number> = {
   IDR: 1,
-  USD: 17825,
-  EUR: 20650,
-  SGD: 13950,
-  JPY: 112
+  USD: 17857,
+  EUR: 20408,
+  SGD: 13889,
+  JPY: 111
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -69,10 +70,10 @@ export const useSettingsStore = create<SettingsState>()(
       fcmToken: '',
       exchangeRates: {
         IDR: 1,
-        USD: 17825,
-        EUR: 20650,
-        SGD: 13950,
-        JPY: 112
+        USD: 17857,
+        EUR: 20408,
+        SGD: 13889,
+        JPY: 111
       },
       lastRatesUpdate: '',
       ratesSource: 'offline',
@@ -92,20 +93,19 @@ export const useSettingsStore = create<SettingsState>()(
       setFcmToken: (fcmToken: string) => set({ fcmToken }),
       fetchExchangeRates: async () => {
         try {
-          const res = await fetch('https://open.er-api.com/v6/latest/IDR', { cache: 'no-store' })
-          if (!res.ok) throw new Error('API request failed')
+          const res = await fetch('https://api.frankfurter.dev/v1/latest?from=IDR&to=USD,EUR,SGD,JPY', { cache: 'no-store' })
+          if (!res.ok) throw new Error(`HTTP ${res.status}`)
           const data = await res.json()
-          if (data && data.result === 'success' && data.rates) {
+          if (data && data.rates) {
             const rates = data.rates
             const newRates: Record<MainCurrency, number> = {
               IDR: 1,
-              USD: rates.USD ? Math.round(1 / rates.USD) : 17825,
-              EUR: rates.EUR ? Math.round(1 / rates.EUR) : 20650,
-              SGD: rates.SGD ? Math.round(1 / rates.SGD) : 13950,
-              JPY: rates.JPY ? Math.round(1 / rates.JPY) : 112,
+              USD: rates.USD ? Math.round(1 / rates.USD) : 17857,
+              EUR: rates.EUR ? Math.round(1 / rates.EUR) : 20408,
+              SGD: rates.SGD ? Math.round(1 / rates.SGD) : 13889,
+              JPY: rates.JPY ? Math.round(1 / rates.JPY) : 111,
             }
-            
-            // Mutate global constant for immediate non-reactive usage
+
             Object.assign(EXCHANGE_RATES, newRates)
 
             set({
@@ -113,15 +113,17 @@ export const useSettingsStore = create<SettingsState>()(
               lastRatesUpdate: new Date().toISOString(),
               ratesSource: 'api'
             })
+          } else {
+            throw new Error('Invalid response structure')
           }
-        } catch {
-          // Gagal memuat kurs real-time, menggunakan default offline
+        } catch (err) {
+            console.error('[ExchangeRates]', err)
           const fallbackRates = {
             IDR: 1,
-            USD: 17825,
-            EUR: 20650,
-            SGD: 13950,
-            JPY: 112
+            USD: 17857,
+            EUR: 20408,
+            SGD: 13889,
+            JPY: 111
           }
           Object.assign(EXCHANGE_RATES, fallbackRates)
           set({
@@ -132,12 +134,20 @@ export const useSettingsStore = create<SettingsState>()(
       },
       resetAllData: () => {
         if (typeof window !== 'undefined') {
+          // Sign out from Firebase and reset auth state
+          import('@/lib/firebase').then(({ getFirebaseAuth }) => {
+            try { getFirebaseAuth().signOut() } catch { /* ignore */ }
+          })
+          useAuthStore.getState().logout()
+
           // Clear all Cashhero local storage keys
           localStorage.removeItem('cashhero-transactions')
           localStorage.removeItem('cashhero-portfolio-dynamic-v2')
           localStorage.removeItem('cashhero-planning-persistent')
           localStorage.removeItem('cashhero-language')
           localStorage.removeItem('cashhero-settings')
+          localStorage.removeItem('cashhero-tracked-outflows')
+          localStorage.removeItem('cashhero-autolog-store')
           
           // Clear standard browser cache dynamically
           if ('caches' in window) {

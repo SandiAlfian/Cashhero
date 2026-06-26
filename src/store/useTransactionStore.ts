@@ -19,6 +19,8 @@ export interface Transaction {
 interface TransactionState {
   transactions: Transaction[]
   addTransaction: (transaction: Omit<Transaction, 'id' | 'date'> & { date?: string }) => void
+  updateTransaction: (id: string, updates: Partial<Omit<Transaction, 'id'>>) => void
+  renameCategory: (oldName: string, newName: string) => void
   deleteTransaction: (id: string) => void
   deleteAssetTransactions: (assetId: string, assetName: string) => void
 }
@@ -37,6 +39,18 @@ export const useTransactionStore = create<TransactionState>()(
             },
             ...state.transactions,
           ],
+        })),
+      updateTransaction: (id, updates) =>
+        set((state) => ({
+          transactions: state.transactions.map((t) =>
+            t.id === id ? { ...t, ...updates } : t
+          ),
+        })),
+      renameCategory: (oldName, newName) =>
+        set((state) => ({
+          transactions: state.transactions.map((t) =>
+            t.category === oldName ? { ...t, category: newName } : t
+          ),
         })),
       deleteTransaction: (id) =>
         set((state) => {

@@ -5,6 +5,7 @@ import { formatCurrency } from "@/lib/format"
 import { JenisBadge } from "./JenisBadge"
 import { useLanguageStore } from "@/store/useLanguageStore"
 import { useRouter } from "next/navigation"
+import { ChevronRight } from "lucide-react"
 import type { TrackedOutflow } from "@/store/useTrackedOutflowsStore"
 
 export function TrackedCard({ item }: { item: TrackedOutflow }) {
@@ -16,7 +17,7 @@ export function TrackedCard({ item }: { item: TrackedOutflow }) {
 
   return (
     <Card
-      className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+      className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 cursor-pointer group relative"
       onClick={() => router.push(`/piutang/${item.id}`)}
     >
       <CardContent className="p-4">
@@ -33,13 +34,16 @@ export function TrackedCard({ item }: { item: TrackedOutflow }) {
             <h3 className="font-bold text-foreground text-sm truncate">{item.personName}</h3>
             {item.note && <p className="text-[10px] text-muted-foreground/60 mt-0.5 truncate">{item.note}</p>}
           </div>
-          <div className="text-right shrink-0">
-            <div className="text-sm font-bold text-card-foreground font-number">
-              {formatCurrency(item.remainingAmount, language as 'id' | 'en')}
+          <div className="text-right shrink-0 flex items-start gap-1.5">
+            <div>
+              <div className="text-sm font-bold text-card-foreground font-number">
+                {formatCurrency(item.remainingAmount, language as 'id' | 'en')}
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                {isId ? 'dari' : 'of'} {formatCurrency(item.amount, language as 'id' | 'en')}
+              </div>
             </div>
-            <div className="text-[10px] text-muted-foreground">
-              {isId ? 'dari' : 'of'} {formatCurrency(item.amount, language as 'id' | 'en')}
-            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary/60 group-hover:translate-x-0.5 transition-all duration-200 mt-1" />
           </div>
         </div>
         <div className="mt-2.5 w-full bg-muted/40 rounded-full h-1.5 relative overflow-hidden">
@@ -53,8 +57,9 @@ export function TrackedCard({ item }: { item: TrackedOutflow }) {
             {new Date(item.date).toLocaleDateString(isId ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' })}
             {item.dueDate && ` · ${isId ? 'jatuh' : 'due'} ${new Date(item.dueDate).toLocaleDateString(isId ? 'id-ID' : 'en-US', { day: 'numeric', month: 'short' })}`}
           </span>
-          <span className="text-[10px] font-bold text-muted-foreground font-number">
-            {pct.toFixed(0)}%
+          <span className="text-[9px] text-muted-foreground/40 flex items-center gap-1">
+            <ChevronRight className="w-2.5 h-2.5" />
+            {isId ? 'Catat & Update' : 'Record & Update'}
           </span>
         </div>
       </CardContent>

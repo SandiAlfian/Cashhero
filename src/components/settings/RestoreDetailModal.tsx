@@ -192,6 +192,18 @@ export function RestoreDetailModal({ open, onOpenChange, loading, onApplyData }:
                       )}
                     </p>
                   </div>
+
+                  {(!backupData.trackedOutflows || backupData.trackedOutflows.length === 0) && (!backupData.transactions || backupData.transactions.length > 0) && (
+                    <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-500/8 border border-blue-500/15">
+                      <AlertTriangle className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold leading-relaxed">
+                        {tStr(
+                          'Backup ini belum memiliki data Piutang/Kasbon. Jika ada transaksi piutang lama di riwayat, sistem akan otomatis memindahkannya saat restore.',
+                          'This backup has no Receivables/Loans data. If old receivable transactions exist in history, they will be auto-migrated during restore.'
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

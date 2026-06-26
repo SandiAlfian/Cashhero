@@ -4,6 +4,7 @@ import * as React from "react"
 import { X } from "lucide-react"
 import { useLanguageStore } from "@/store/useLanguageStore"
 import { useTrackedOutflowsStore } from "@/store/useTrackedOutflowsStore"
+import { useTransactionStore } from "@/store/useTransactionStore"
 import { parseNum, formatInputVal, getTranslation, CURRENCY_SYMBOLS } from "@/lib/format"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { motion, AnimatePresence } from "framer-motion"
@@ -19,6 +20,7 @@ export function ModalBayar({ open, onClose, itemId, maxAmount }: Props) {
   const language = useLanguageStore((s) => s.language)
   const activeCurrency = useSettingsStore((s) => s.currency)
   const addRepayment = useTrackedOutflowsStore((s) => s.addRepayment)
+  const addTransaction = useTransactionStore((s) => s.addTransaction)
   const t = (key: string) => getTranslation(language, key)
 
   const [amount, setAmount] = React.useState('')
@@ -42,6 +44,13 @@ export function ModalBayar({ open, onClose, itemId, maxAmount }: Props) {
     e.preventDefault()
     if (!isValid) return
     addRepayment(itemId, parsed, date, note)
+    addTransaction({
+      type: 'in',
+      category: 'Piutang',
+      amount: parsed,
+      note: `${isId ? 'Pembayaran' : 'Payment'}${note ? ` — ${note}` : ''}`,
+      date,
+    })
     onClose()
   }
 

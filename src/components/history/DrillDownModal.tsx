@@ -3,10 +3,11 @@
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { FileText, FileSpreadsheet, Trash2 } from "lucide-react"
+import { FileText, FileSpreadsheet, Pencil, Trash2 } from "lucide-react"
 import { exportToExcel, exportToPDF } from "@/lib/export"
 import type { Language } from "@/store/useLanguageStore"
 import type { GroupedRow } from "@/lib/history"
+import type { Transaction } from "@/store/useTransactionStore"
 
 interface DrillDownModalProps {
   activeGroup: GroupedRow | null
@@ -19,6 +20,7 @@ interface DrillDownModalProps {
   t: (key: string) => string
   onDeleteTransaction: (id: string) => void
   onTriggerToast: (msg: string) => void
+  onEditTransaction?: (tx: Transaction) => void
 }
 
 export function DrillDownModal({
@@ -31,7 +33,8 @@ export function DrillDownModal({
   language,
   t,
   onDeleteTransaction,
-  onTriggerToast
+  onTriggerToast,
+  onEditTransaction
 }: DrillDownModalProps) {
   if (!activeGroup) return null
 
@@ -121,7 +124,7 @@ export function DrillDownModal({
                   <TableHead className="text-muted-foreground font-extrabold text-xs uppercase tracking-wider py-3.5 px-6">{t('category')}</TableHead>
                   <TableHead className="text-muted-foreground font-extrabold text-xs uppercase tracking-wider py-3.5 px-6">{t('note')}</TableHead>
                   <TableHead className="text-right text-muted-foreground font-extrabold text-xs uppercase tracking-wider py-3.5 px-6">{t('amount')}</TableHead>
-                  <TableHead className="w-[80px] py-3.5 px-6"></TableHead>
+                  <TableHead className="w-[120px] py-3.5 px-6"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -140,17 +143,29 @@ export function DrillDownModal({
                         {tx.type === 'in' ? '+' : '-'}{mounted ? formatCurrency(tx.amount, language) : "Rp 0"}
                       </TableCell>
                       <TableCell className="py-3.5 text-center px-6">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            onDeleteTransaction(tx.id)
-                            onTriggerToast(t('toastTxDeleted'))
-                          }}
-                          className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-7 w-7 opacity-0 group-hover:opacity-100 transition-all cursor-pointer rounded-md"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="flex items-center justify-center gap-0.5">
+                          {onEditTransaction && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onEditTransaction(tx)}
+                              className="text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 h-7 w-7 opacity-0 group-hover:opacity-100 transition-all cursor-pointer rounded-md"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              onDeleteTransaction(tx.id)
+                              onTriggerToast(t('toastTxDeleted'))
+                            }}
+                            className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-7 w-7 opacity-0 group-hover:opacity-100 transition-all cursor-pointer rounded-md"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )

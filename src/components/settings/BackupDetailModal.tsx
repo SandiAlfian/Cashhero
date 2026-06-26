@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { CloudUpload, FileText, RefreshCw, Target, TrendingUp, Wallet, BarChart3, Clock } from "lucide-react"
+import { CloudUpload, FileText, RefreshCw, Target, TrendingUp, Wallet, BarChart3, Clock, Shield, ExternalLink } from "lucide-react"
 import { useLanguageStore } from "@/store/useLanguageStore"
 import { useTransactionStore } from "@/store/useTransactionStore"
 import { usePlanningStore } from "@/store/usePlanningStore"
@@ -42,6 +42,9 @@ export function BackupDetailModal({ open, onOpenChange, onConfirm, loading }: Ba
   const trackedOutflows = useTrackedOutflowsStore((s) => s.items)
   const portfolioAssets = usePortfolioStore((s) => s.assets)
   const lastSyncAt = useAuthStore((s) => s.lastSyncAt)
+  const backupConsentAt = useAuthStore((s) => s.backupConsentAt)
+  const setBackupConsent = useAuthStore((s) => s.setBackupConsent)
+  const [consented, setConsented] = React.useState(!!backupConsentAt)
 
   const dataRows: DataRow[] = React.useMemo(() => [
     { icon: FileText, labelKey: 'transactions', count: transactions.length },
@@ -141,8 +144,56 @@ export function BackupDetailModal({ open, onOpenChange, onConfirm, loading }: Ba
               )}
             </div>
 
+            {/* Privacy & Encryption Notice */}
+            <div className="px-6 pb-2 space-y-3">
+              <div className="p-3.5 rounded-xl bg-muted/10 border border-border/10 space-y-2.5">
+                <div className="flex items-start gap-2.5">
+                  <Shield className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-muted-foreground/80 leading-relaxed">
+                    {language === 'id'
+                      ? 'Data Anda dienkripsi end-to-end (TLS 1.3) saat dikirim dan terenkripsi (AES-256) saat disimpan di cloud Google Cloud Firestore. Hanya akun Google Anda yang memiliki akses ke data Anda.'
+                      : 'Your data is encrypted in transit (TLS 1.3) and at rest (AES-256) in Google Cloud Firestore. We cannot read your data — only your Google account has access.'}
+                  </p>
+                </div>
+                <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={consented}
+                    onChange={(e) => {
+                      setConsented(e.target.checked)
+                      if (e.target.checked) setBackupConsent()
+                    }}
+                    className="mt-0.5 w-4 h-4 rounded border-border/60 text-primary focus:ring-primary/30 accent-primary cursor-pointer"
+                  />
+                  <span className="text-[11px] text-muted-foreground/80 leading-relaxed">
+                    {language === 'id' ? (
+                      <>Saya menyetujui{' '}
+                        <a href="/privacy" target="_blank" className="text-primary underline underline-offset-2 hover:text-primary/80 font-semibold inline-flex items-center gap-0.5">
+                          Kebijakan Privasi <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                        {' & '}
+                        <a href="/terms" target="_blank" className="text-primary underline underline-offset-2 hover:text-primary/80 font-semibold inline-flex items-center gap-0.5">
+                          Syarat & Ketentuan <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      </>
+                    ) : (
+                      <>I agree to the{' '}
+                        <a href="/privacy" target="_blank" className="text-primary underline underline-offset-2 hover:text-primary/80 font-semibold inline-flex items-center gap-0.5">
+                          Privacy Policy <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                        {' & '}
+                        <a href="/terms" target="_blank" className="text-primary underline underline-offset-2 hover:text-primary/80 font-semibold inline-flex items-center gap-0.5">
+                          Terms & Conditions <ExternalLink className="w-2.5 h-2.5" />
+                        </a>
+                      </>
+                    )}
+                  </span>
+                </label>
+              </div>
+            </div>
+
             {/* Actions */}
-            <div className="p-6 pt-0 grid grid-cols-2 gap-3">
+            <div className="p-6 pt-2 grid grid-cols-2 gap-3">
               <button
                 onClick={() => onOpenChange(false)}
                 disabled={loading}
@@ -151,8 +202,11 @@ export function BackupDetailModal({ open, onOpenChange, onConfirm, loading }: Ba
                 {language === 'id' ? 'Batal' : 'Cancel'}
               </button>
               <button
-                onClick={onConfirm}
-                disabled={loading || totalItems === 0}
+                onClick={() => {
+                  setBackupConsent()
+                  onConfirm()
+                }}
+                disabled={loading || totalItems === 0 || !consented}
                 className="w-full bg-blue-500 text-white hover:bg-blue-500/90 py-2.5 px-4 rounded-xl font-bold text-xs transition-all duration-200 cursor-pointer text-center shadow-lg shadow-blue-500/20 flex items-center justify-center gap-1.5 select-none disabled:opacity-55"
               >
                 {loading ? (

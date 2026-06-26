@@ -72,6 +72,7 @@ export default function Home() {
     balance,
     totalInvestment,
     totalSavings,
+    totalReceivables,
     netWorth,
     recentTransactions,
   } = useDashboardData(filter, startDate, endDate)
@@ -412,6 +413,7 @@ export default function Home() {
           balance={balance}
           totalInvestment={totalInvestment}
           totalSavings={totalSavings}
+          totalReceivables={totalReceivables}
           netWorth={netWorth}
           assets={assets}
           onOpenPortfolio={handleOpenPortfolio}

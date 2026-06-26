@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion } from "framer-motion"
-import { Plus, Handshake, Tag, Filter } from "lucide-react"
+import { Plus, Handshake, Tag, ChevronRight } from "lucide-react"
 import { useLanguageStore } from "@/store/useLanguageStore"
 import { useTrackedOutflowsStore, JENIS_OPTIONS } from "@/store/useTrackedOutflowsStore"
 import { formatCurrency, getTranslation } from "@/lib/format"
@@ -69,35 +69,41 @@ export default function PiutangPage() {
       </div>
 
       {/* Summary Card */}
-      <Card className="bg-card border-border shadow-sm">
-        <CardContent className="p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('totalOutstanding')}</span>
-            <Filter className="w-4 h-4 text-muted-foreground/40" />
-          </div>
-          <div className="text-2xl font-extrabold text-card-foreground font-number">
-            {formatCurrency(totalOutstanding, language as 'id' | 'en')}
-          </div>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {allJenis.map((jenis) => {
-              const Icon = JENIS_ICONS[jenis] || Tag
-              const total = activeByJenis[jenis] || 0
-              if (total <= 0 && items.filter((i) => i.jenis === jenis).length === 0) return null
-              return (
-                <span key={jenis}
-                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
-                    activeTab === jenis ? 'bg-primary text-primary-foreground' : 'bg-muted/40 text-muted-foreground hover:bg-muted/70'
-                  }`}
-                  onClick={() => setActiveTab(jenis)}
-                >
-                  <Icon className="w-3 h-3" />
-                  {jenisLabels[jenis] || jenis}: {formatCurrency(total, language as 'id' | 'en')}
-                </span>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      <Link href="/piutang/add">
+        <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 cursor-pointer group">
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t('totalOutstanding')}</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary/60 group-hover:translate-x-0.5 transition-all duration-200" />
+            </div>
+            <div className="text-2xl font-extrabold text-card-foreground font-number">
+              {formatCurrency(totalOutstanding, language as 'id' | 'en')}
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {allJenis.map((jenis) => {
+                const Icon = JENIS_ICONS[jenis] || Tag
+                const total = activeByJenis[jenis] || 0
+                if (total <= 0 && items.filter((i) => i.jenis === jenis).length === 0) return null
+                return (
+                  <span key={jenis}
+                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${
+                      activeTab === jenis ? 'bg-primary text-primary-foreground' : 'bg-muted/40 text-muted-foreground hover:bg-muted/70'
+                    }`}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setActiveTab(jenis)
+                    }}
+                  >
+                    <Icon className="w-3 h-3" />
+                    {jenisLabels[jenis] || jenis}: {formatCurrency(total, language as 'id' | 'en')}
+                  </span>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
 
       {/* Tab Filter */}
       <div className="flex items-center gap-1 bg-card border border-border p-1 rounded-xl shadow-sm w-fit overflow-x-auto scrollbar-none">

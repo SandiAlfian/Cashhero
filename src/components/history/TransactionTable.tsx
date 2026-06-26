@@ -2,7 +2,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Trash2 } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
 import type { Transaction } from "@/store/useTransactionStore"
 import type { Language } from "@/store/useLanguageStore"
 
@@ -15,6 +15,7 @@ interface TransactionTableProps {
   t: (key: string) => string
   onDeleteTransaction: (id: string) => void
   onTriggerToast: (msg: string) => void
+  onEditTransaction?: (tx: Transaction) => void
   compact?: boolean
 }
 
@@ -27,6 +28,7 @@ export function TransactionTable({
   t,
   onDeleteTransaction,
   onTriggerToast,
+  onEditTransaction,
   compact
 }: TransactionTableProps) {
   return (
@@ -37,7 +39,7 @@ export function TransactionTable({
           <TableHead className="text-muted-foreground font-extrabold text-xs uppercase tracking-wider py-3.5 px-6">{t('category')}</TableHead>
           <TableHead className="text-muted-foreground font-extrabold text-xs uppercase tracking-wider py-3.5 px-6">{t('note')}</TableHead>
           <TableHead className="text-right text-muted-foreground font-extrabold text-xs uppercase tracking-wider py-3.5 px-6">{t('amount')}</TableHead>
-          <TableHead className="w-[80px] no-print py-3.5 px-6"></TableHead>
+          <TableHead className="w-[120px] no-print py-3.5 px-6"></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -56,21 +58,37 @@ export function TransactionTable({
                 {tx.type === 'in' ? '+' : '-'}{mounted ? formatCurrency(tx.amount, language) : "Rp 0"}
               </TableCell>
               <TableCell className="no-print py-3.5 px-6">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    onDeleteTransaction(tx.id)
-                    onTriggerToast(t('toastTxDeleted'))
-                  }}
-                  className={`text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all cursor-pointer ${
-                    compact
-                      ? "h-7 w-7 opacity-0 group-hover:opacity-100 rounded-md"
-                      : "h-8 w-8 opacity-0 group-hover:opacity-100 rounded-lg"
-                  }`}
-                >
-                  <Trash2 className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
-                </Button>
+                <div className="flex items-center justify-end gap-0.5">
+                  {onEditTransaction && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEditTransaction(tx)}
+                      className={`text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 transition-all cursor-pointer ${
+                        compact
+                          ? "h-7 w-7 opacity-0 group-hover:opacity-100 rounded-md"
+                          : "h-8 w-8 opacity-0 group-hover:opacity-100 rounded-lg"
+                      }`}
+                    >
+                      <Pencil className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      onDeleteTransaction(tx.id)
+                      onTriggerToast(t('toastTxDeleted'))
+                    }}
+                    className={`text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all cursor-pointer ${
+                      compact
+                        ? "h-7 w-7 opacity-0 group-hover:opacity-100 rounded-md"
+                        : "h-8 w-8 opacity-0 group-hover:opacity-100 rounded-lg"
+                    }`}
+                  >
+                    <Trash2 className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           )

@@ -5,6 +5,7 @@ import { useTransactionStore } from "@/store/useTransactionStore"
 import { usePortfolioStore } from "@/store/usePortfolioStore"
 import { usePlanningStore } from "@/store/usePlanningStore"
 import { useSettingsStore } from "@/store/useSettingsStore"
+import { useTrackedOutflowsStore } from "@/store/useTrackedOutflowsStore"
 import {
   type DashboardPeriodFilter,
   filterTransactions,
@@ -18,6 +19,7 @@ export function useDashboardData(filter: DashboardPeriodFilter, startDate: strin
   const { assets } = usePortfolioStore()
   const goals = usePlanningStore((state) => state.goals)
   const activeCurrency = useSettingsStore((state) => state.currency)
+  const trackedItems = useTrackedOutflowsStore((state) => state.items)
 
   const filteredTransactions = useMemo(
     () => filterTransactions(transactions, filter, startDate, endDate),
@@ -27,21 +29,30 @@ export function useDashboardData(filter: DashboardPeriodFilter, startDate: strin
   const periodSubLabel = useMemo(() => buildPeriodSubLabel(filter, 'id'), [filter])
 
   const overallIn = useMemo(
-    () => transactions.filter((t) => t.type === 'in' && t.category !== 'Tabungan').reduce((acc, curr) => acc + curr.amount, 0),
+    () => transactions.filter((t) => t.type === 'in' && t.category !== 'Tabungan' && t.category !== 'Piutang').reduce((acc, curr) => acc + curr.amount, 0),
     [transactions]
   )
   const overallOut = useMemo(
-    () => transactions.filter((t) => t.type === 'out').reduce((acc, curr) => acc + curr.amount, 0),
+    () => transactions.filter((t) => t.type === 'out' && t.category !== 'Piutang').reduce((acc, curr) => acc + curr.amount, 0),
     [transactions]
   )
-  const balance = overallIn - overallOut
+
+  const totalReceivables = useMemo(
+    () => trackedItems.filter((i) => i.status === 'active').reduce((sum, i) => sum + i.remainingAmount, 0),
+    [trackedItems]
+  )
+
+  const balance = useMemo(
+    () => overallIn - overallOut - totalReceivables,
+    [overallIn, overallOut, totalReceivables]
+  )
 
   const totalIn = useMemo(
-    () => filteredTransactions.filter((t) => t.type === 'in' && t.category !== 'Tabungan').reduce((acc, curr) => acc + curr.amount, 0),
+    () => filteredTransactions.filter((t) => t.type === 'in' && t.category !== 'Tabungan' && t.category !== 'Piutang').reduce((acc, curr) => acc + curr.amount, 0),
     [filteredTransactions]
   )
   const totalOut = useMemo(
-    () => filteredTransactions.filter((t) => t.type === 'out').reduce((acc, curr) => acc + curr.amount, 0),
+    () => filteredTransactions.filter((t) => t.type === 'out' && t.category !== 'Piutang').reduce((acc, curr) => acc + curr.amount, 0),
     [filteredTransactions]
   )
 
@@ -55,7 +66,7 @@ export function useDashboardData(filter: DashboardPeriodFilter, startDate: strin
     [goals]
   )
 
-  const netWorth = balance + totalInvestment + totalSavings
+  const netWorth = balance + totalInvestment + totalSavings + totalReceivables
   const recentTransactions = transactions.slice(0, 5)
 
   return {
@@ -70,6 +81,7 @@ export function useDashboardData(filter: DashboardPeriodFilter, startDate: strin
     balance,
     totalInvestment,
     totalSavings,
+    totalReceivables,
     netWorth,
     recentTransactions,
   }

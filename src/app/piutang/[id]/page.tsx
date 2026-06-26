@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { ArrowLeft, Plus, Wallet, Pencil, Trash2, CheckCircle2 } from "lucide-react"
 import { useLanguageStore } from "@/store/useLanguageStore"
 import { useTrackedOutflowsStore } from "@/store/useTrackedOutflowsStore"
+import { useTransactionStore } from "@/store/useTransactionStore"
 import { formatCurrency, getTranslation } from "@/lib/format"
 import { PiutangInfoCard } from "@/components/piutang/PiutangInfoCard"
 import { ModalBayar } from "@/components/piutang/ModalBayar"
@@ -21,6 +22,7 @@ export default function PiutangDetailPage() {
   const removeRepayment = useTrackedOutflowsStore((s) => s.removeRepayment)
   const updateRepaymentStore = useTrackedOutflowsStore((s) => s.updateRepayment)
   const settleItem = useTrackedOutflowsStore((s) => s.settleItem)
+  const addTransaction = useTransactionStore((s) => s.addTransaction)
   const t = (key: string) => getTranslation(language, key)
   const isId = language === "id"
 
@@ -46,6 +48,15 @@ export default function PiutangDetailPage() {
   }
 
   const handleSettleConfirm = () => {
+    if (item && item.remainingAmount > 0) {
+      addTransaction({
+        type: 'in',
+        category: 'Piutang',
+        amount: item.remainingAmount,
+        note: `${isId ? 'Pelunasan' : 'Settlement'} — ${item.personName}`,
+        date: new Date().toISOString().slice(0, 10),
+      })
+    }
     settleItem(item.id)
     setShowSettleConfirm(false)
   }

@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { ArrowLeft, Plus, Tag } from "lucide-react"
 import { useLanguageStore } from "@/store/useLanguageStore"
 import { useTrackedOutflowsStore, JENIS_OPTIONS } from "@/store/useTrackedOutflowsStore"
+import { useTransactionStore } from "@/store/useTransactionStore"
 import { parseNum, formatInputVal, getTranslation, CURRENCY_SYMBOLS } from "@/lib/format"
 import { useSettingsStore } from "@/store/useSettingsStore"
 import { JENIS_INFO, CUSTOM_KEY } from "@/lib/piutang"
@@ -16,6 +17,7 @@ export default function AddPiutangPage() {
   const language = useLanguageStore((s) => s.language)
   const activeCurrency = useSettingsStore((s) => s.currency)
   const addItem = useTrackedOutflowsStore((s) => s.addItem)
+  const addTransaction = useTransactionStore((s) => s.addTransaction)
   const t = (key: string) => getTranslation(language, key)
 
   const isId = language === 'id'
@@ -42,6 +44,13 @@ export default function AddPiutangPage() {
       date,
       dueDate,
       note: note.trim(),
+    })
+    addTransaction({
+      type: 'out',
+      category: 'Piutang',
+      amount: parsed,
+      note: `${finalJenis}: ${personName.trim()}${note.trim() ? ` — ${note.trim()}` : ''}`,
+      date,
     })
     router.push('/piutang')
   }

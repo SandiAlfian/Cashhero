@@ -14,7 +14,7 @@ export function MigrationSection() {
   const language = useLanguageStore((s) => s.language)
   const isId = language === 'id'
   const [open, setOpen] = React.useState(false)
-  const [deleteOrig, setDeleteOrig] = React.useState(true)
+  const [deleteOrig, setDeleteOrig] = React.useState(false)
   const transactions = useTransactionStore((s) => s.transactions)
   const deleteTx = useTransactionStore((s) => s.deleteTransaction)
   const addItem = useTrackedOutflowsStore((s) => s.addItem)

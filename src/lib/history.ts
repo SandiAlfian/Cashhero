@@ -96,11 +96,11 @@ export function filterTransactionsByPeriod(
 }
 
 function calculateGroupIncome(txs: Transaction[]): number {
-  return txs.filter(t => t.type === 'in' && t.category !== 'Tabungan').reduce((sum, t) => sum + t.amount, 0)
+  return txs.filter(t => t.type === 'in' && t.category !== 'Tabungan' && t.category !== 'Piutang').reduce((sum, t) => sum + t.amount, 0)
 }
 
 function calculateGroupExpense(txs: Transaction[]): number {
-  return txs.filter(t => t.type === 'out').reduce((sum, t) => sum + t.amount, 0)
+  return txs.filter(t => t.type === 'out' && t.category !== 'Piutang').reduce((sum, t) => sum + t.amount, 0)
 }
 
 const MONTHS_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
@@ -208,11 +208,11 @@ export function buildQuarterlyGroups(transactions: Transaction[], currentYear: n
 
 export function calculateFilteredTotals(transactions: Transaction[]) {
   const totalIn = transactions
-    .filter((t) => t.type === 'in' && t.category !== 'Tabungan')
+    .filter((t) => t.type === 'in' && t.category !== 'Tabungan' && t.category !== 'Piutang')
     .reduce((acc, curr) => acc + curr.amount, 0)
 
   const totalOut = transactions
-    .filter((t) => t.type === 'out')
+    .filter((t) => t.type === 'out' && t.category !== 'Piutang')
     .reduce((acc, curr) => acc + curr.amount, 0)
 
   return { totalIn, totalOut, balance: totalIn - totalOut }

@@ -188,20 +188,31 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
       if (d.budgets) usePlanningStore.setState({ budgets: d.budgets })
       if (d.goals) usePlanningStore.setState({ goals: d.goals })
       if (d.autoLogRules) useAutoLogStore.setState({ rules: d.autoLogRules })
-      if (d.trackedOutflows) useTrackedOutflowsStore.setState({ items: d.trackedOutflows })
+      if (d.trackedOutflows) {
+        useTrackedOutflowsStore.setState({ items: d.trackedOutflows })
+      } else if (d.transactions) {
+        const piutangTx = d.transactions.filter(
+          (tx: any) => tx.type === 'out' && tx.category?.toLowerCase().includes('piutang')
+        )
+        if (piutangTx.length > 0) {
+          const migrated = piutangTx.map((tx: any) => ({
+            id: crypto.randomUUID(),
+            jenis: 'piutang',
+            personName: tx.note || tx.category,
+            amount: tx.amount,
+            remainingAmount: tx.amount,
+            date: tx.date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+            dueDate: '',
+            note: `${tx.category}${tx.note && tx.note !== tx.category ? ` — ${tx.note}` : ''}`,
+            status: 'active' as const,
+            repayments: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }))
+          useTrackedOutflowsStore.setState({ items: migrated })
+        }
+      }
       if (d.portfolioAssets) usePortfolioStore.setState({ assets: d.portfolioAssets })
-      // Force persist to localStorage so data survives page navigation
-      const stores = [
-        { store: useSettingsStore, key: 'cashhero-settings' },
-        { store: useTransactionStore, key: 'cashhero-transactions' },
-        { store: usePlanningStore, key: 'cashhero-planning-persistent' },
-        { store: useAutoLogStore, key: 'cashhero-autolog-store' },
-        { store: useTrackedOutflowsStore, key: 'cashhero-tracked-outflows' },
-        { store: usePortfolioStore, key: 'cashhero-portfolio-dynamic-v2' },
-      ]
-      stores.forEach(({ store, key }) => {
-        try { localStorage.setItem(key, JSON.stringify(store.getState())) } catch { /* ignore */ }
-      })
       setLastSyncAt(d.backedUpAt)
       setShowRestoreModal(false)
       triggerToast(language === 'id' ? 'Data berhasil dipulihkan dari cloud!' : 'Data restored from cloud successfully!')

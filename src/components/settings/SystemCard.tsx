@@ -164,7 +164,9 @@ export function SystemCard({ triggerToast }: SystemCardProps) {
       "cashhero-portfolio-dynamic-v2": localStorage.getItem("cashhero-portfolio-dynamic-v2"),
       "cashhero-planning-persistent": localStorage.getItem("cashhero-planning-persistent"),
       "cashhero-language": localStorage.getItem("cashhero-language"),
-      "cashhero-settings": localStorage.getItem("cashhero-settings")
+      "cashhero-settings": localStorage.getItem("cashhero-settings"),
+      "cashhero-tracked-outflows": localStorage.getItem("cashhero-tracked-outflows"),
+      "cashhero-autolog-store": localStorage.getItem("cashhero-autolog-store")
     }
     const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`
     const downloadAnchor = document.createElement('a')
@@ -204,7 +206,9 @@ export function SystemCard({ triggerToast }: SystemCardProps) {
           "cashhero-portfolio-dynamic-v2",
           "cashhero-planning-persistent",
           "cashhero-language",
-          "cashhero-settings"
+          "cashhero-settings",
+          "cashhero-tracked-outflows",
+          "cashhero-autolog-store"
         ]
         const hasValidKey = validKeys.some(key => key in parsed)
         if (!hasValidKey) {

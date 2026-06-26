@@ -214,10 +214,10 @@ export function filterByPeriod(
 
 export function calculateTotals(transactions: Transaction[]) {
   const totalIn = transactions
-    .filter(t => t.type === 'in' && t.category !== 'Tabungan')
+    .filter(t => t.type === 'in' && t.category !== 'Tabungan' && t.category !== 'Piutang')
     .reduce((acc, curr) => acc + curr.amount, 0)
   const totalOut = transactions
-    .filter(t => t.type === 'out')
+    .filter(t => t.type === 'out' && t.category !== 'Piutang')
     .reduce((acc, curr) => acc + curr.amount, 0)
   return { totalIn, totalOut, netFlow: totalIn - totalOut }
 }
@@ -334,7 +334,7 @@ export function buildCashFlowData(
 // ─── Donut Data Builder ───────────────────────────────────────────────────────
 
 export function buildDonutData(transactions: Transaction[], _language: string): { expenses: Transaction[]; totalSpent: number; donutData: DonutDataPoint[] } { // eslint-disable-line @typescript-eslint/no-unused-vars
-  const expenses = transactions.filter((t) => t.type === 'out' && t.category !== 'Tabungan')
+  const expenses = transactions.filter((t) => t.type === 'out' && t.category !== 'Tabungan' && t.category !== 'Piutang')
   const totalSpent = expenses.reduce((acc, curr) => acc + curr.amount, 0)
 
   const expensesByCategory = expenses.reduce((acc, t) => {
@@ -420,6 +420,7 @@ export function computeStatistics(
   const dailyTotals = new Map<string, { income: number; expense: number }>()
 
   for (const tx of filteredTransactions) {
+    if (tx.category === 'Piutang') continue
     if (tx.type === 'in') totalIncome += tx.amount
     else {
       totalExpense += tx.amount
@@ -828,10 +829,10 @@ export function buildMonthDetailData(transactions: Transaction[], selectedMonthI
   })
 
   const monthIn = monthTransactions
-    .filter(t => t.type === 'in' && t.category !== 'Tabungan')
+    .filter(t => t.type === 'in' && t.category !== 'Tabungan' && t.category !== 'Piutang')
     .reduce((acc, curr) => acc + curr.amount, 0)
   const monthOut = monthTransactions
-    .filter(t => t.type === 'out')
+    .filter(t => t.type === 'out' && t.category !== 'Piutang')
     .reduce((acc, curr) => acc + curr.amount, 0)
   const monthNet = monthIn - monthOut
 

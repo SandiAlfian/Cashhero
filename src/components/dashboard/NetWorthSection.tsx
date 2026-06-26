@@ -1,8 +1,9 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { TrendingUp, Wallet, Coins } from "lucide-react"
+import { TrendingUp, Wallet, Coins, Handshake } from "lucide-react"
 import type { InvestmentAsset } from "@/store/usePortfolioStore"
+import { useRouter } from "next/navigation"
 
 interface Props {
   t: (k: string) => string
@@ -12,6 +13,7 @@ interface Props {
   balance: number
   totalInvestment: number
   totalSavings: number
+  totalReceivables: number
   netWorth: number
   assets: InvestmentAsset[]
   onOpenPortfolio: () => void
@@ -19,9 +21,10 @@ interface Props {
 
 export function NetWorthSection({
   t, mounted, formatCurrency, language,
-  balance, totalInvestment, totalSavings, netWorth,
+  balance, totalInvestment, totalSavings, totalReceivables, netWorth,
   assets, onOpenPortfolio,
 }: Props) {
+  const router = useRouter()
   return (
     <div className="grid gap-6 md:grid-cols-4">
       <Card className="md:col-span-2 bg-gradient-to-br from-primary/10 via-card to-card border-primary/20 shadow-sm relative overflow-hidden hover:shadow-md transition-all">
@@ -40,8 +43,8 @@ export function NetWorthSection({
           </div>
           <p className="text-xs text-muted-foreground mt-2">
             {language === 'id'
-              ? "Saldo Tunai + Investasi Portofolio + Total Tabungan"
-              : "Cash Balance + Portfolio Investments + Total Savings"}
+              ? "Saldo Tunai + Investasi + Tabungan + Piutang"
+              : "Cash Balance + Investments + Savings + Receivables"}
           </p>
           <div className="flex items-center gap-4 mt-5 pt-4 border-t border-border/40 text-xs flex-wrap">
             <div>
@@ -54,10 +57,15 @@ export function NetWorthSection({
               <span className="font-semibold text-primary">{mounted ? formatCurrency(totalInvestment, language) : formatCurrency(0, language)}</span>
             </div>
             <div className="w-[1px] h-6 bg-border/60" />
-            <div>
-              <span className="text-muted-foreground block mb-0.5">{language === 'id' ? 'Total Tabungan' : 'Total Savings'}</span>
-              <span className="font-semibold text-green-500">{mounted ? formatCurrency(totalSavings, language) : formatCurrency(0, language)}</span>
-            </div>
+            <button onClick={() => router.push('/planning')} className="cursor-pointer text-left group/save">
+              <span className="text-muted-foreground block mb-0.5 group-hover/save:text-emerald-500 transition-colors">{language === 'id' ? 'Total Tabungan' : 'Total Savings'}</span>
+              <span className="font-semibold text-green-500 group-hover/save:brightness-110 transition-all">{mounted ? formatCurrency(totalSavings, language) : formatCurrency(0, language)}</span>
+            </button>
+            <div className="w-[1px] h-6 bg-border/60" />
+            <button onClick={() => router.push('/piutang')} className="cursor-pointer text-left group/piut">
+              <span className="text-muted-foreground block mb-0.5 group-hover/piut:text-amber-500 transition-colors">{language === 'id' ? 'Piutang' : 'Receivables'}</span>
+              <span className="font-semibold text-amber-500 dark:text-amber-400 group-hover/piut:brightness-110 transition-all">{mounted ? formatCurrency(totalReceivables, language) : formatCurrency(0, language)}</span>
+            </button>
           </div>
         </CardContent>
       </Card>

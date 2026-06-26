@@ -214,7 +214,7 @@ export function FinancialPreferencesCard({ triggerToast }: FinancialPreferencesC
                     }`}>
                       {ratesSource === 'api'
                         ? (language === 'id' ? 'Terupdate Real-Time' : 'Live API Connected')
-                        : (language === 'id' ? 'Mode Offline (Mei 2026)' : 'Offline Fallback')}
+                        : (language === 'id' ? 'Mode Offline (Data Tersimpan)' : 'Saved Fallback')}
                     </span>
                   </div>
                 </div>
@@ -222,19 +222,19 @@ export function FinancialPreferencesCard({ triggerToast }: FinancialPreferencesC
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 font-bold text-foreground">
                   <div className="flex justify-between border-b border-border/10 pb-1">
                     <span className="text-muted-foreground">1 USD</span>
-                    <span>Rp {(exchangeRates?.USD || 17825).toLocaleString('id-ID')}</span>
+                    <span>Rp {(exchangeRates?.USD || 17857).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between border-b border-border/10 pb-1">
                     <span className="text-muted-foreground">1 EUR</span>
-                    <span>Rp {(exchangeRates?.EUR || 20650).toLocaleString('id-ID')}</span>
+                    <span>Rp {(exchangeRates?.EUR || 20408).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between border-b border-border/10 pb-1">
                     <span className="text-muted-foreground">1 SGD</span>
-                    <span>Rp {(exchangeRates?.SGD || 13950).toLocaleString('id-ID')}</span>
+                    <span>Rp {(exchangeRates?.SGD || 13889).toLocaleString('id-ID')}</span>
                   </div>
                   <div className="flex justify-between border-b border-border/10 pb-1">
                     <span className="text-muted-foreground">1 JPY</span>
-                    <span>Rp {(exchangeRates?.JPY || 112).toLocaleString('id-ID')}</span>
+                    <span>Rp {(exchangeRates?.JPY || 111).toLocaleString('id-ID')}</span>
                   </div>
                 </div>
 

@@ -82,8 +82,8 @@ export default function SettingsPage() {
             </p>
             <p className="text-[11px] leading-relaxed">
               {language === 'id'
-                ? "Seluruh data Anda disimpan secara mandiri dan aman di penyimpanan lokal peramban Anda (local storage). Kami tidak mengunggah data keuangan Anda ke server mana pun guna menjaga privasi mutlak."
-                : "All your data is saved independently and securely in your local browser storage (local storage). We do not upload your financial data to any server to ensure absolute privacy."}
+                ? "Data Anda disimpan aman di peramban (localStorage). Cadangan cloud bersifat opsional — hanya terkirim jika Anda menghubungkan akun Google dan melakukan pencadangan secara manual. Data cadangan dienkripsi TLS 1.3 (pengiriman) & AES-256 (penyimpanan). Lihat Kebijakan Privasi untuk detail lengkap."
+                : "Your data is stored securely in your browser (localStorage). Cloud backup is optional — only sent when you connect your Google account and manually back up. Backed-up data is encrypted with TLS 1.3 (transit) & AES-256 (storage). See Privacy Policy for full details."}
             </p>
           </div>
         </div>
