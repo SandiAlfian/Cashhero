@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAdminAuth } from '@/lib/firebase-admin'
-import { getFirestoreDb } from '@/lib/firebase-admin'
+import { getFirestoreDb, verifyIdTokenRest } from '@/lib/firebase-admin'
 
 const BACKUP_COLLECTION = 'user_backups'
 
@@ -11,13 +10,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing authorization header' }, { status: 401 })
     }
 
-    const firebaseAuth = getAdminAuth()
-    if (!firebaseAuth) {
-      return NextResponse.json({ error: 'Firebase Auth not available' }, { status: 500 })
-    }
-
     const idToken = authHeader.slice(7)
-    const decoded = await firebaseAuth.verifyIdToken(idToken)
+    const decoded = await verifyIdTokenRest(idToken)
     const uid = decoded.uid
 
     const db = getFirestoreDb()
@@ -46,6 +40,7 @@ export async function POST(req: Request) {
     })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Restore failed'
+    console.error('[BACKUP RESTORE ERROR]', msg)
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

@@ -105,7 +105,7 @@ export function AutoLogEngine() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fcmToken: token, rules: currentRules }),
-    }).catch(() => {})
+    }).catch((err) => console.error('[AutoLogEngine] syncRules fetch failed', err))
   }, [])
 
   // Sync rules to Firestore (blocked until reconciled with server)
@@ -116,8 +116,16 @@ export function AutoLogEngine() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fcmToken, rules }),
-    }).catch(() => {})
+    }).catch((err) => console.error('[AutoLogEngine] sync effect fetch failed', err))
   }, [autoLogging, fcmToken, rules])
+
+  // Share FCM token with SW so notification click actions include it
+  React.useEffect(() => {
+    if (!fcmToken || typeof window === 'undefined') return
+    navigator.serviceWorker.ready.then((reg) => {
+      reg.active?.postMessage({ type: 'SET_FCM_TOKEN', payload: { token: fcmToken } })
+    }).catch((err) => console.error('[AutoLogEngine] SET_FCM_TOKEN postMessage failed', err))
+  }, [fcmToken])
 
   // Reconcile local rules with Firestore on mount (handles actions taken while app was closed)
   React.useEffect(() => {
@@ -171,7 +179,7 @@ export function AutoLogEngine() {
           }
         }
       })
-      .catch(() => {})
+      .catch((err) => console.error('[AutoLogEngine] reconcile fetch failed', err))
       .finally(() => {
         if (cancelled) return
         reconciled.current = true
@@ -188,7 +196,7 @@ export function AutoLogEngine() {
 
     // Register SW
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {})
+      navigator.serviceWorker.register('/sw.js').catch((err) => console.error('[AutoLogEngine] SW registration failed', err))
     }
 
     // Periodic check every 30 min while app is open

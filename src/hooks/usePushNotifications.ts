@@ -76,7 +76,7 @@ export function usePushNotifications() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, lang: language, filter: 'monthly' }),
-        }).catch(() => {})
+        }).catch((err) => console.error('[PushNotifications] register endpoint failed', err))
         return token
       } else {
         const msg =
@@ -132,7 +132,7 @@ export function usePushNotifications() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: currentToken, lang: '', filter: '', remove: true }),
-        }).catch(() => {})
+        }).catch((err) => console.error('[PushNotifications] unregister endpoint failed', err))
       }
     }
   }

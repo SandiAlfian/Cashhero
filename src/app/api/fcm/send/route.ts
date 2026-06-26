@@ -64,7 +64,7 @@ async function sendFcmBatch(entries: FcmTokenEntry[], title: string, bodyId: str
           data: { type },
         })
         s += (result.successCount || 0)
-      } catch { /* skip failed batch */ }
+      } catch (err) { console.error('[FCM Send] batch send failed', err) }
     }
     return s
   }

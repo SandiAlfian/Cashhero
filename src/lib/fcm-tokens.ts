@@ -19,13 +19,15 @@ function getDb() {
     if (!sa) return null
     try {
       initializeApp({ credential: cert(JSON.parse(sa)) })
-    } catch {
+    } catch (err) {
+      console.error('[FCM Tokens] initAdmin failed', err)
       return null
     }
   }
   try {
     return getFirestore()
-  } catch {
+  } catch (err) {
+    console.error('[FCM Tokens] getFirestore failed', err)
     return null
   }
 }
@@ -46,7 +48,8 @@ async function readFromFirestore(): Promise<FcmTokenEntry[] | null> {
       })
     })
     return tokens
-  } catch {
+  } catch (err) {
+    console.error('[FCM Tokens] readFromFirestore failed', err)
     return null
   }
 }
@@ -78,7 +81,8 @@ async function writeToFirestore(tokens: FcmTokenEntry[]): Promise<boolean> {
 
     await batch.commit()
     return true
-  } catch {
+  } catch (err) {
+    console.error('[FCM Tokens] writeToFirestore failed', err)
     return false
   }
 }
@@ -90,7 +94,8 @@ export async function readTokens(): Promise<FcmTokenEntry[]> {
   try {
     if (!fs.existsSync(TOKENS_PATH)) return []
     return JSON.parse(fs.readFileSync(TOKENS_PATH, 'utf-8'))
-  } catch {
+  } catch (err) {
+    console.error('[FCM Tokens] file readTokens failed', err)
     return []
   }
 }

@@ -31,7 +31,7 @@ messaging.onBackgroundMessage((payload) => {
       icon: '/cashhero-logo-192.png',
       badge: '/cashhero-logo-192.png',
       tag: 'recurring-' + (data.pendingId || Date.now()),
-      data: { type: 'recurring', pendingId: data.pendingId, ruleId: data.ruleId, dueDate: data.dueDate, lang: data.lang },
+      data: { type: 'recurring', pendingId: data.pendingId, ruleId: data.ruleId, dueDate: data.dueDate, lang: data.lang, fcmToken: storedFcmToken },
       vibrate: [200, 100, 200],
       actions,
     });
@@ -44,7 +44,7 @@ messaging.onBackgroundMessage((payload) => {
       icon: '/cashhero-logo-192.png',
       badge: '/cashhero-logo-192.png',
       tag: 'recurring-pending',
-      data: { type: 'recurring-batch', count: data.count, lang: data.lang },
+      data: { type: 'recurring-batch', count: data.count, lang: data.lang, fcmToken: storedFcmToken },
     });
     return;
   }
@@ -138,16 +138,14 @@ async function tryShowScheduled() {
   }
 
   if (isPeriodEnd) {
-    // End of period: audit is priority, skip regular reminders entirely
-    await tryShowAuditReport()
+    try { await tryShowAuditReport() } catch (err) { console.error('[SW] tryShowAuditReport failed', err) }
     return
   }
 
   // Normal day: regular slot notifications
   const sent = await getSentSlots()
   if (slot === '23:00') {
-    // Also check audit at 23:00 on normal days in case data was cached earlier
-    await tryShowAuditReport()
+    try { await tryShowAuditReport() } catch (err) { console.error('[SW] tryShowAuditReport failed', err) }
   }
   if (sent.includes(slot)) return
   await markSlot(slot)
@@ -255,6 +253,7 @@ self.addEventListener('periodicsync', (event) => {
 
 // ── Menerima Pesan dari Client (Aplikasi Web) ──────────────────────────────────
 let storedLang = null
+let storedFcmToken = null
 
 self.addEventListener('message', (event) => {
   const data = event.data
@@ -275,6 +274,11 @@ self.addEventListener('message', (event) => {
     return
   }
 
+  if (data.type === 'SET_FCM_TOKEN') {
+    storedFcmToken = data.payload?.token || null
+    return
+  }
+
   if (data.type === 'SHOW_RECURRING_NOTIFICATION') {
     const items = data.payload?.items || []
     if (items.length === 0) return
@@ -292,7 +296,7 @@ self.addEventListener('message', (event) => {
           badge: '/cashhero-logo-192.png',
           tag: 'recurring-' + item.id,
           vibrate: [200, 100, 200],
-          data: { type: 'recurring', pendingId: item.id },
+          data: { type: 'recurring', pendingId: item.id, fcmToken: storedFcmToken },
           actions: [
             { action: 'recurring-confirm', title: storedLang === 'id' ? 'Konfirmasi' : 'Confirm' },
             { action: 'recurring-skip', title: storedLang === 'id' ? 'Lewati' : 'Skip' },
@@ -338,7 +342,7 @@ self.addEventListener('notificationclick', (event) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fcmToken, pendingId, action: actionType }),
-      }).catch(() => {})
+      }).catch((err) => console.error('[SW] action fetch failed', err))
     }
 
     event.waitUntil(

@@ -68,6 +68,23 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
     setEmailInput(email)
   }
 
+  function friendlyError(msg: string): string {
+    const m = msg.toLowerCase()
+    if (m.includes('popup') || m.includes('closed') || m.includes('blocked'))
+      return language === 'id' ? 'Popup login ditutup atau diblokir. Izinkan popup untuk situs ini.' : 'Login popup closed or blocked. Please allow popups for this site.'
+    if (m.includes('expired'))
+      return language === 'id' ? 'Sesi masuk telah berakhir. Silakan masuk kembali.' : 'Your session has expired. Please sign in again.'
+    if (m.includes('invalid') || m.includes('verification failed') || m.includes('token'))
+      return language === 'id' ? 'Sesi tidak valid. Silakan masuk kembali.' : 'Invalid session. Please sign in again.'
+    if (m.includes('500') || m.includes('server error') || m.includes('not available'))
+      return language === 'id' ? 'Layanan sedang terganggu. Silakan coba beberapa saat lagi.' : 'Service temporarily unavailable. Please try again later.'
+    if (m.includes('network') || m.includes('fetch') || m.includes('abort') || m.includes('timeout'))
+      return language === 'id' ? 'Koneksi gagal. Periksa jaringan Anda.' : 'Connection failed. Check your network.'
+    if (m.includes('firestore') || m.includes('database'))
+      return language === 'id' ? 'Layanan penyimpanan cloud tidak tersedia.' : 'Cloud storage service unavailable.'
+    return language === 'id' ? 'Sinkronisasi gagal. Silakan coba lagi.' : 'Sync failed. Please try again.'
+  }
+
   const handleGoogleSignIn = async () => {
     setError(null)
     try {
@@ -102,12 +119,9 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
       }
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string }
-      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
-        setError(language === 'id' ? 'Popup ditutup atau diblokir. Izinkan popup untuk situs ini.' : 'Popup closed or blocked. Allow popups for this site.')
-      } else {
-        const detail = err?.message || ''
-        setError(language === 'id' ? `Gagal menyinkronkan: ${detail}` : `Sync failed: ${detail}`)
-      }
+      setError(err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request'
+        ? (language === 'id' ? 'Popup login ditutup atau diblokir. Izinkan popup untuk situs ini.' : 'Login popup closed or blocked. Please allow popups for this site.')
+        : friendlyError(err?.message || ''))
     }
   }
 
@@ -136,13 +150,16 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(payload),
       })
-      if (!res.ok) throw new Error('Backup failed')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error || `Server returned ${res.status}`)
+      }
       const data = await res.json()
       setLastSyncAt(data.backedUpAt)
       setBackupExists(true)
       triggerToast(language === 'id' ? 'Data berhasil dicadangkan ke cloud!' : 'Data backed up to cloud successfully!')
-    } catch {
-      setError(language === 'id' ? 'Gagal menyinkronkan. Coba lagi.' : 'Sync failed. Please try again.')
+    } catch (e) {
+      setError(friendlyError((e as Error)?.message || ''))
     } finally {
       setBackupLoading(false)
     }
@@ -162,8 +179,8 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
       setLastSyncAt(d.backedUpAt)
       setShowRestoreModal(false)
       triggerToast(language === 'id' ? 'Data berhasil dipulihkan dari cloud!' : 'Data restored from cloud successfully!')
-    } catch {
-      setError(language === 'id' ? 'Gagal menyinkronkan. Coba lagi.' : 'Sync failed. Please try again.')
+    } catch (e) {
+      setError(friendlyError((e as Error)?.message || ''))
     } finally {
       setRestoreLoading(false)
     }

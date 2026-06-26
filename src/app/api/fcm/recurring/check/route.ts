@@ -16,7 +16,8 @@ function getDb() {
   try {
     initializeApp({ credential: cert(JSON.parse(sa)) })
     return getFirestore()
-  } catch {
+  } catch (err) {
+    console.error('[RecurringCheck] getDb failed', err)
     return null
   }
 }
@@ -35,7 +36,9 @@ async function filterAlreadyNotified(items: { rule: AutoLogRule; dueDate: string
         // Skip if already notified today
         if (data?.notifiedAt?.startsWith(today)) continue
       }
-    } catch { /* skip check */ }
+    } catch (err) {
+      console.error('[RecurringCheck] filterAlreadyNotified read failed', err)
+    }
     result.push(item)
   }
   return result

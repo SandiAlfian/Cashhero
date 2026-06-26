@@ -11,13 +11,15 @@ function getDb() {
     if (!sa) return null
     try {
       initializeApp({ credential: cert(JSON.parse(sa)) })
-    } catch {
+    } catch (err) {
+      console.error('[RecurringRules] initAdmin failed', err)
       return null
     }
   }
   try {
     return getFirestore()
-  } catch {
+  } catch (err) {
+    console.error('[RecurringRules] getFirestore failed', err)
     return null
   }
 }
@@ -45,7 +47,8 @@ export async function syncRules(fcmToken: string, rules: AutoLogRule[]) {
     }, { merge: true })
     await batch.commit()
     return true
-  } catch {
+  } catch (err) {
+    console.error('[RecurringRules] syncRules failed', err)
     return false
   }
 }
@@ -58,7 +61,8 @@ export async function getRulesForToken(fcmToken: string): Promise<AutoLogRule[] 
     if (!doc.exists) return null
     const data = doc.data()
     return data?.rules || null
-  } catch {
+  } catch (err) {
+    console.error('[RecurringRules] getRulesForToken failed', err)
     return null
   }
 }
@@ -79,7 +83,8 @@ export async function getAllActiveRules(): Promise<{ fcmToken: string; rules: Au
       }
     })
     return result
-  } catch {
+  } catch (err) {
+    console.error('[RecurringRules] getAllActiveRules failed', err)
     return []
   }
 }
@@ -99,7 +104,9 @@ export async function markPendingNotified(fcmToken: string, pendingIds: string[]
       })
     }
     await batch.commit()
-  } catch { /* ignore */ }
+  } catch (err) {
+    console.error('[RecurringRules] markPendingNotified failed', err)
+  }
 }
 
 export async function updateRuleAfterAction(fcmToken: string, ruleId: string, action: 'confirm' | 'skip' | 'reject', dueDate: string) {
@@ -121,7 +128,9 @@ export async function updateRuleAfterAction(fcmToken: string, ruleId: string, ac
       rules[idx] = { ...rule, lastExecutedDate: dueDate }
     }
     await docRef.update({ rules })
-  } catch { /* ignore */ }
+  } catch (err) {
+    console.error('[RecurringRules] updateRuleAfterAction failed', err)
+  }
 }
 
 function countMissedDates(frequency: string, startDate: string, lastExecuted: string | null): string[] {
