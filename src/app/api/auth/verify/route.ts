@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getAdminAuth } from '@/lib/firebase-admin'
+
+const API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyBTBuTd-ddbCjebkhcXlwhi8wBD5A9IX4Q'
 
 export async function POST(req: Request) {
   try {
@@ -15,28 +16,36 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'idToken required' }, { status: 400 })
     }
 
-    const auth = getAdminAuth()
-
-    if (!auth) {
-      const sa = process.env.FCM_SERVICE_ACCOUNT
-      console.error('[VERIFY ENV CHECK] FCM_SERVICE_ACCOUNT exists:', !!sa, 'type:', typeof sa, 'length:', sa?.length)
-      if (sa) {
-        try { JSON.parse(sa); console.error('[VERIFY ENV CHECK] JSON parse OK') }
-        catch (e) { console.error('[VERIFY ENV CHECK] JSON parse FAILED:', e) }
+    const res = await fetch(
+      `https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=${API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
       }
-      return NextResponse.json({ error: 'Firebase Auth not available — FCM_SERVICE_ACCOUNT missing or invalid on Vercel' }, { status: 500 })
+    )
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      console.error('[VERIFY REST ERROR]', res.status, err)
+      return NextResponse.json({ error: err?.error?.message || 'Token verification failed' }, { status: 401 })
     }
 
-    const decoded = await auth.verifyIdToken(idToken)
+    const data = await res.json()
+    const user = data.users?.[0]
+    if (!user) {
+      return NextResponse.json({ error: 'No user data returned' }, { status: 401 })
+    }
+
     return NextResponse.json({
-      uid: decoded.uid,
-      email: decoded.email || '',
-      name: decoded.name || decoded.email?.split('@')[0] || 'User',
-      picture: decoded.picture || '',
+      uid: user.localId,
+      email: user.email || '',
+      name: user.displayName || user.email?.split('@')[0] || 'User',
+      picture: user.photoUrl || '',
     })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Unknown error'
     console.error('[VERIFY ERROR]', msg)
-    return NextResponse.json({ error: msg }, { status: 401 })
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
