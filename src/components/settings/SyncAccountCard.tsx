@@ -161,19 +161,20 @@ export function SyncAccountCard({ triggerToast }: { triggerToast: (msg: string) 
         if (d.trackedOutflows) {
           useTrackedOutflowsStore.setState({ items: d.trackedOutflows })
         } else if (d.transactions) {
-          const piutangTx = d.transactions.filter(
-            (tx: any) => tx.type === 'out' && tx.category?.toLowerCase().includes('piutang')
+          interface MigrationTx { type?: string; category?: string; note?: string; amount?: number; date?: string }
+          const piutangTx = (d.transactions as MigrationTx[]).filter(
+            (tx) => tx.type === 'out' && (tx.category ?? '').toLowerCase().includes('piutang')
           )
           if (piutangTx.length > 0) {
-            const migrated = piutangTx.map((tx: any) => ({
+            const migrated = piutangTx.map((tx) => ({
               id: crypto.randomUUID(),
               jenis: 'piutang',
-              personName: tx.note || tx.category,
-              amount: tx.amount,
-              remainingAmount: tx.amount,
+              personName: tx.note || tx.category || '',
+              amount: tx.amount || 0,
+              remainingAmount: tx.amount || 0,
               date: tx.date?.slice(0, 10) || new Date().toISOString().slice(0, 10),
               dueDate: '',
-              note: `${tx.category}${tx.note && tx.note !== tx.category ? ' \u2014 ' + tx.note : ''}`,
+              note: `${tx.category ?? ''}${tx.note && tx.note !== tx.category ? ' \u2014 ' + tx.note : ''}`,
               status: 'active' as const,
               repayments: [],
               createdAt: new Date().toISOString(),
