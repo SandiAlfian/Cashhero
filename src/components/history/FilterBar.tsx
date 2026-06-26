@@ -20,7 +20,7 @@ export function FilterBar({ filter, setFilter, startDate, setStartDate, endDate,
   const [isMobileFilterDropdownOpen, setIsMobileFilterDropdownOpen] = React.useState(false)
 
   return (
-    <div className="flex flex-col gap-4 bg-card border border-border p-4 rounded-xl shadow-sm no-print">
+    <div className="relative z-10 flex flex-col gap-4 bg-card border border-border p-4 rounded-xl shadow-sm no-print">
       {/* TAMPILAN DESKTOP (Horizontal Buttons & Inline Date) */}
       <div className="hidden md:flex flex-row items-center gap-1.5 flex-nowrap overflow-x-auto scrollbar-none w-full max-w-full py-1">
         <span className="text-xs font-semibold text-muted-foreground mr-1.5 flex items-center gap-1 uppercase tracking-wider shrink-0 select-none">

@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
     const auth = getAdminAuth()
     if (!auth) {
-      return NextResponse.json({ error: 'Firebase Auth not available' }, { status: 500 })
+      return NextResponse.json({ error: 'Firebase Auth not available — FCM_SERVICE_ACCOUNT missing or invalid on server' }, { status: 500 })
     }
 
     const decoded = await auth.verifyIdToken(idToken)
@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Invalid token'
+    console.error('[VERIFY ERROR]', msg)
     return NextResponse.json({ error: msg }, { status: 401 })
   }
 }

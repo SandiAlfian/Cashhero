@@ -80,7 +80,10 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: token }),
       })
-      if (!res.ok) throw new Error('Verification failed')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody?.error || `Server returned ${res.status}`)
+      }
       const data = await res.json()
 
       setUser({ uid: data.uid, email: data.email, name: data.name, picture: data.picture }, token)
@@ -98,11 +101,12 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
         setBackupExists(true)
       }
     } catch (e: unknown) {
-      const err = e as { code?: string }
+      const err = e as { code?: string; message?: string }
       if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
         setError(language === 'id' ? 'Popup ditutup atau diblokir. Izinkan popup untuk situs ini.' : 'Popup closed or blocked. Allow popups for this site.')
       } else {
-        setError(language === 'id' ? 'Gagal menyinkronkan. Coba lagi.' : 'Sync failed. Please try again.')
+        const detail = err?.message || ''
+        setError(language === 'id' ? `Gagal menyinkronkan: ${detail}` : `Sync failed: ${detail}`)
       }
     }
   }
