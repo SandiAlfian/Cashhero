@@ -1,6 +1,6 @@
 import { getApps, initializeApp, cert } from 'firebase-admin/app'
 import { getFirestore, type Firestore } from 'firebase-admin/firestore'
-import { getAuth, type Auth } from 'firebase-admin/auth'
+import type { Auth } from 'firebase-admin/auth'
 
 const FIREBASE_API_KEY = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyBTBuTd-ddbCjebkhcXlwhi8wBD5A9IX4Q'
 
@@ -35,12 +35,14 @@ export function getFirestoreDb(): Firestore | null {
   return db
 }
 
-export function getAdminAuth(): Auth | null {
+export async function getAdminAuth(): Promise<Auth | null> {
   const app = getAdminApp()
   if (!app) return null
   try {
+    const { getAuth } = await import('firebase-admin/auth')
     return getAuth()
-  } catch {
+  } catch (err) {
+    console.error('[firebase-admin] getAdminAuth failed', err)
     return null
   }
 }
