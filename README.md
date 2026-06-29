@@ -1,36 +1,127 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cashhero — Pahlawan Kelola Keuangan Pribadi
 
-## Getting Started
+Aplikasi manajemen keuangan pribadi berbasis web (PWA) dengan dukungan multi-mata uang, budget planning, portfolio tracking, dan notifikasi push.
 
-First, run the development server:
+## Tech Stack
+
+- **Framework:** Next.js 15 (App Router)
+- **UI:** React 19, Tailwind CSS v4, shadcn/ui
+- **State:** Zustand v5 + localStorage
+- **Backend:** Firebase Auth, Firestore, FCM
+- **Bahasa:** Indonesia / English
+
+## Persyaratan
+
+- Node.js 20+
+- pnpm (latest)
+- Akun Firebase dengan Firestore & FCM diaktifkan
+
+## Setup Lokal
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# 1. Clone repository
+git clone https://github.com/<user>/cashhero.git
+cd cashhero
+
+# 2. Install dependencies
+pnpm install
+
+# 3. Copy environment variables
+cp .env.example .env.local
+
+# 4. Isi .env.local — lihat penjelasan di bawah
+
+# 5. Jalankan development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable                 | Wajib | Deskripsi                                                                                 |
+| ------------------------ | ----- | ----------------------------------------------------------------------------------------- |
+| `FCM_SERVICE_ACCOUNT`    | ✅    | Service account JSON (Firebase Admin SDK) — untuk notifikasi push server-side & Firestore |
+| `CRON_SECRET`            | ✅    | Secret key untuk melindungi cron endpoint `/api/fcm/send`                                 |
+| `NEXT_PUBLIC_FIREBASE_*` | ❌    | Opsional — override konfigurasi Firebase client (fallback ke built-in defaults)           |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Mendapatkan Service Account
 
-## Learn More
+1. Buka [Firebase Console](https://console.firebase.google.com) → Project Settings → Service accounts
+2. Klik "Generate new private key"
+3. Copy seluruh JSON ke dalam `FCM_SERVICE_ACCOUNT` di `.env.local` (jadikan satu baris)
 
-To learn more about Next.js, take a look at the following resources:
+### Setup Firestore
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Firebase Console → Firestore → Create Database
+2. Pilih region (recommended: `asia-southeast2`)
+3. Pilih "Start in test mode" (atau atur security rules)
+4. Collection `fcm_tokens` akan terbuat otomatis saat token didaftarkan
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
+| Perintah         | Deskripsi                      |
+| ---------------- | ------------------------------ |
+| `pnpm dev`       | Development server (Turbopack) |
+| `pnpm dev:clean` | Hapus cache `.next` lalu dev   |
+| `pnpm build`     | Build production               |
+| `pnpm start`     | Jalankan production server     |
+| `pnpm lint`      | ESLint check                   |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Vercel (recommended)
+
+```bash
+pnpm add -g vercel
+vercel --prod
+```
+
+Pastikan environment variables di-set di dashboard Vercel.
+
+### Self-hosted
+
+```bash
+pnpm build
+pnpm start  # Jalankan dengan process manager (PM2 / systemd)
+```
+
+Pastikan health check endpoint `/api/health` dimonitor oleh load balancer / monitoring tool.
+
+## API Documentation
+
+Dokumentasi lengkap API tersedia dalam format OpenAPI 3.1:
+
+📄 [`docs/openapi.json`](docs/openapi.json)
+
+Bisa dibuka di [Swagger Editor](https://editor.swagger.io/) atau [Stoplight](https://stoplight.io/studio).
+
+### Endpoint Overview
+
+| Method | Endpoint                    | Deskripsi                                        |
+| ------ | --------------------------- | ------------------------------------------------ |
+| GET    | `/api/health`               | Health check                                     |
+| POST   | `/api/auth/verify`          | Verifikasi Firebase ID token                     |
+| POST   | `/api/backup/save`          | Backup data user ke Firestore                    |
+| POST   | `/api/backup/restore`       | Restore data user dari Firestore                 |
+| POST   | `/api/fcm/register`         | Register/unregister FCM token                    |
+| GET    | `/api/fcm/send`             | Kirim notifikasi push (cron)                     |
+| GET    | `/api/fcm/test`             | Kirim test notifikasi                            |
+| GET    | `/api/fcm/recurring/check`  | Cek & kirim notifikasi transaksi berulang (cron) |
+| POST   | `/api/fcm/recurring/sync`   | Sync recurring rules ke Firestore                |
+| POST   | `/api/fcm/recurring/state`  | Ambil rules untuk token tertentu                 |
+| POST   | `/api/fcm/recurring/action` | Handle confirm/skip/reject transaksi berulang    |
+
+## Cron Setup
+
+Dua endpoint membutuhkan cron trigger eksternal (cron-job.org / GitHub Actions):
+
+```
+# Notifikasi pagi (07:00) & malam (19:00)
+GET /api/fcm/send?type=morning&key=CRON_SECRET
+GET /api/fcm/send?type=evening&key=CRON_SECRET
+
+# Audit period end
+GET /api/fcm/send?type=audit&key=CRON_SECRET
+
+# Recurring transaction check (setiap 30 menit)
+GET /api/fcm/recurring/check?key=CRON_SECRET
+```

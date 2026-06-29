@@ -5,6 +5,7 @@ import { getFirestore } from 'firebase-admin/firestore'
 import type { AutoLogRule } from '@/store/useAutoLogStore'
 import { getAllActiveRules, computeDueItems, markPendingNotified } from '@/lib/recurringRules'
 import { readTokens } from '@/lib/fcm-tokens'
+import { logger } from '@/lib/logger'
 
 const CRON_SECRET = process.env.CRON_SECRET
 const PENDING_COLLECTION = 'recurring_pending'
@@ -17,7 +18,7 @@ function getDb() {
     initializeApp({ credential: cert(JSON.parse(sa)) })
     return getFirestore()
   } catch (err) {
-    console.error('[RecurringCheck] getDb failed', err)
+    logger.error('RecurringCheck', 'getDb failed', err)
     return null
   }
 }
@@ -37,7 +38,7 @@ async function filterAlreadyNotified(items: { rule: AutoLogRule; dueDate: string
         if (data?.notifiedAt?.startsWith(today)) continue
       }
     } catch (err) {
-      console.error('[RecurringCheck] filterAlreadyNotified read failed', err)
+      logger.error('RecurringCheck', 'filterAlreadyNotified read failed', err)
     }
     result.push(item)
   }
@@ -106,7 +107,7 @@ export async function GET(req: Request) {
             },
           })
           sent++
-        } catch { /* skip failed */ }
+        } catch (err) { logger.error('RecurringCheck', 'send single failed', err) }
       } else {
         try {
           await messaging.send({
@@ -120,7 +121,7 @@ export async function GET(req: Request) {
             data: { type: 'recurring-summary', count: String(items.length), lang },
           })
           sent++
-        } catch { /* skip failed */ }
+        } catch (err) { logger.error('RecurringCheck', 'send summary failed', err) }
       }
 
       await markPendingNotified(fcmToken, pendingIds)

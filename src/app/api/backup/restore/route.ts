@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getFirestoreDb, verifyIdTokenRest } from '@/lib/firebase-admin'
+import { logger } from '@/lib/logger'
 
 const BACKUP_COLLECTION = 'user_backups'
 
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Restore failed'
-    console.error('[BACKUP RESTORE ERROR]', msg)
+    logger.error('BackupRestore', msg)
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

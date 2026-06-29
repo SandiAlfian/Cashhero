@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getApps, initializeApp, cert } from 'firebase-admin/app'
 import { getMessaging } from 'firebase-admin/messaging'
 import { readTokens, type FcmTokenEntry } from '@/lib/fcm-tokens'
+import { logger } from '@/lib/logger'
 
 const CRON_SECRET = process.env.CRON_SECRET
 
@@ -37,15 +38,23 @@ function isEndOfPeriod(filter: string): boolean {
 
 function getMessages(type: string) {
   if (type === 'morning') {
-    return { title: 'Cashhero', body_id: 'Selamat pagi! \u2604\ufe0f Saatnya meninjau anggaran & mencatat pengeluaran hari ini.', body_en: 'Good morning! \u2604\ufe0f Review your budget & log today\'s expenses.' }
+    return { title: 'Cashhero', body_id: 'Selamat pagi!  Saatnya meninjau anggaran & mencatat pengeluaran hari ini.', body_en: 'Good morning!  Review your budget & log today\'s expenses.' }
   }
   if (type === 'evening') {
-    return { title: 'Cashhero', body_id: 'Selamat malam! \ud83c\udf19 Catat pengeluaran hari ini agar tetap sesuai anggaran.', body_en: 'Good evening! \ud83c\udf19 Log today\'s expenses to stay on budget.' }
+    return { title: 'Cashhero', body_id: 'Selamat malam!  Catat pengeluaran hari ini agar tetap sesuai anggaran.', body_en: 'Good evening!  Log today\'s expenses to stay on budget.' }
   }
   return { title: 'Laporan Audit Periode', body_id: 'Periode audit telah berakhir. Buka aplikasi untuk melihat skor keuangan & rekomendasi Anda.', body_en: 'Audit period has ended. Open the app to see your financial score & recommendations.' }
 }
 
-async function sendFcmBatch(entries: FcmTokenEntry[], title: string, bodyId: string, bodyEn: string, type: string) {
+async function sendFcmBatch(
+  entries: FcmTokenEntry[],
+  title: string,
+  bodyId: string,
+  bodyEn: string,
+  type: string,
+  tag: string,
+  link: string = '/'
+) {
   if (entries.length === 0) return 0
 
   const messaging = initAdmin()
@@ -61,10 +70,25 @@ async function sendFcmBatch(entries: FcmTokenEntry[], title: string, bodyId: str
         const result = await messaging.sendEachForMulticast({
           tokens: tokens.slice(i, i + 500),
           notification: { title, body },
-          data: { type },
+          data: { type, link },
+          // webpush config: deduplication tag + click link
+          webpush: {
+            notification: {
+              tag,           // replaces existing notification with same tag
+              renotify: false,
+              icon: '/cashhero-logo-192.png',
+              badge: '/cashhero-logo-192.png',
+            },
+            fcmOptions: { link },
+          },
+          // android: deduplication via collapse_key
+          android: {
+            collapseKey: tag,
+            notification: { tag, icon: 'ic_notification' },
+          },
         })
         s += (result.successCount || 0)
-      } catch (err) { console.error('[FCM Send] batch send failed', err) }
+      } catch (err) { logger.error('FcmSend', 'batch send failed', err) }
     }
     return s
   }
@@ -103,12 +127,27 @@ export async function GET(req: Request) {
     }
   }
 
+  // Notification tag & link — must match the tags in firebase-messaging-sw.js
+  // so the browser replaces any existing notification with the same tag.
+  const tagMap: Record<string, string> = {
+    morning: 'cashhero-morning',
+    evening: 'cashhero-evening',
+    audit:   'cashhero-audit-report',
+  }
+  const linkMap: Record<string, string> = {
+    morning: '/',
+    evening: '/',
+    audit:   '/statistics',
+  }
+
   const sent = await sendFcmBatch(
     targetTokens,
     msgs.title,
     msgs.body_id,
     msgs.body_en,
     type,
+    tagMap[type] || 'cashhero-general',
+    linkMap[type] || '/'
   )
 
   return NextResponse.json({ ok: true, sent, total: targetTokens.length })

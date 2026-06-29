@@ -38,6 +38,7 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
   const [nameInput, setNameInput] = React.useState("")
   const [emailInput, setEmailInput] = React.useState("")
   const [error, setError] = React.useState<string | null>(null)
+  const [profileImgFailed, setProfileImgFailed] = React.useState(false)
   const [showBackupModal, setShowBackupModal] = React.useState(false)
   const [showRestoreModal, setShowRestoreModal] = React.useState(false)
   const [backupLoading, setBackupLoading] = React.useState(false)
@@ -47,24 +48,10 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
     setMounted(true)
     setNameInput(username)
     setEmailInput(email)
-  }, [username, email])
+    setProfileImgFailed(false)
+  }, [username, email, user?.uid])
 
-  // Check backup availability on mount when user is logged in
-  React.useEffect(() => {
-    if (!user || !useAuthStore.getState().idToken) return
-    let cancelled = false
-    const token = useAuthStore.getState().idToken
-    fetch('/api/backup/restore', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (!cancelled) setBackupAvailable(!!data.exists)
-      })
-      .catch(() => {})
-    return () => { cancelled = true }
-  }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
+  // backupAvailable persisted in useAuthStore, set during sign-in/restore
 
   const t = React.useCallback((key: keyof typeof localT['id']) => {
     if (!mounted) return localT['id'][key]
@@ -271,8 +258,12 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
             <div className="space-y-4">
               {/* User Profile Summary */}
               <div className="flex items-center gap-3.5 p-3 rounded-xl bg-muted/20 border border-border/10">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-rose-700 dark:from-rose-500 dark:to-violet-600 flex items-center justify-center font-black text-white shadow-md text-base select-none shrink-0 transition-transform duration-300 group-hover:scale-105">
-                  {getInitials(username)}
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-rose-700 dark:from-rose-500 dark:to-violet-600 flex items-center justify-center font-black text-white shadow-md text-base select-none shrink-0 transition-transform duration-300 group-hover:scale-105 overflow-hidden">
+                  {user?.picture && !profileImgFailed ? (
+                    <img src={user.picture} alt="" className="w-full h-full object-cover" onError={() => setProfileImgFailed(true)} />
+                  ) : (
+                    getInitials(username)
+                  )}
                 </div>
                 <div>
                   <h4 className="font-bold text-foreground text-sm leading-tight">{username}</h4>
@@ -336,13 +327,6 @@ export function ProfileCard({ triggerToast }: ProfileCardProps) {
                     <div className="space-y-3">
                       {/* Google user info */}
                       <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-br from-blue-500/5 to-indigo-500/5 border border-blue-500/15">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center font-black text-white shadow-sm text-sm select-none shrink-0 overflow-hidden">
-                          {user.picture ? (
-                            <img src={user.picture} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            user.name.charAt(0).toUpperCase()
-                          )}
-                        </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-foreground text-xs leading-tight truncate">{user.name}</h4>
                           <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{user.email}</p>

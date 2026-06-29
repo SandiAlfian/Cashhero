@@ -1,64 +1,10 @@
 // Cashhero Service Worker
-// Handles background sync and Firebase FCM background push notification support
+// Handles PWA caching, background sync, local scheduled notifications,
+// and recurring transaction reminders.
+//
+// Firebase FCM background messages are handled by firebase-messaging-sw.js.
+// Do NOT add FCM logic here to avoid duplicate notification handlers.
 
-// ── Firebase Cloud Messaging Integration ──────────────────────────────────────
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
-
-firebase.initializeApp({
-  apiKey: "AIzaSyBTBuTd-ddbCjebkhcXlwhi8wBD5A9IX4Q",
-  authDomain: "cashhero-1ccbc.firebaseapp.com",
-  projectId: "cashhero-1ccbc",
-  storageBucket: "cashhero-1ccbc.firebasestorage.app",
-  messagingSenderId: "274124067625",
-  appId: "1:274124067625:web:5b043631a016f5c672dd38"
-});
-
-const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage((payload) => {
-  console.log('[sw.js] Received background message ', payload);
-  const data = payload.data || {};
-
-  if (data.type === 'recurring') {
-    const actions = [];
-    if (data.actionConfirm) actions.push({ action: 'recurring-confirm', title: data.actionConfirm });
-    if (data.actionSkip) actions.push({ action: 'recurring-skip', title: data.actionSkip });
-    if (data.actionReject) actions.push({ action: 'recurring-reject', title: data.actionReject });
-
-    self.registration.showNotification(payload.notification?.title || 'Cashhero', {
-      body: payload.notification?.body || '',
-      icon: '/cashhero-logo-192.png',
-      badge: '/cashhero-logo-192.png',
-      tag: 'recurring-' + (data.pendingId || Date.now()),
-      data: { type: 'recurring', pendingId: data.pendingId, ruleId: data.ruleId, dueDate: data.dueDate, lang: data.lang, fcmToken: storedFcmToken },
-      vibrate: [200, 100, 200],
-      actions,
-    });
-    return;
-  }
-
-  if (data.type === 'recurring-summary') {
-    self.registration.showNotification(payload.notification?.title || 'Cashhero', {
-      body: payload.notification?.body || '',
-      icon: '/cashhero-logo-192.png',
-      badge: '/cashhero-logo-192.png',
-      tag: 'recurring-pending',
-      data: { type: 'recurring-batch', count: data.count, lang: data.lang, fcmToken: storedFcmToken },
-    });
-    return;
-  }
-
-  const notificationTitle = payload.notification?.title || 'Cashhero';
-  const notificationOptions = {
-    body: payload.notification?.body || 'Ada notifikasi baru dari Cashhero.',
-    icon: '/cashhero-logo-192.png',
-    badge: '/cashhero-logo-192.png',
-    data: payload.data,
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});
 
 const CACHE_NAME = 'cashhero-v1'
 const NOTI_CACHE = 'cashhero-notifications'
@@ -96,11 +42,11 @@ function currentSlot() {
 function slotMessage(slot) {
   const lang = storedLang || 'id'
   if (lang === 'id') {
-    if (slot === '09:00') return 'Selamat pagi! \u2604\ufe0f Saatnya meninjau anggaran & mencatat pengeluaran hari ini.'
-    return 'Selamat malam! \ud83c\udf19 Catat pengeluaran hari ini agar tetap sesuai anggaran.'
+    if (slot === '09:00') return 'Selamat pagi!  Saatnya meninjau anggaran & mencatat pengeluaran hari ini.'
+    return 'Selamat malam!  Catat pengeluaran hari ini agar tetap sesuai anggaran.'
   }
-  if (slot === '09:00') return 'Good morning! \u2604\ufe0f Review your budget & log today\'s expenses.'
-  return 'Good evening! \ud83c\udf19 Log today\'s expenses to stay on budget.'
+  if (slot === '09:00') return 'Good morning!  Review your budget & log today\'s expenses.'
+  return 'Good evening!  Log today\'s expenses to stay on budget.'
 }
 function getLastDayOfMonth(year, month) {
   return new Date(year, month + 1, 0).getDate()
@@ -149,11 +95,15 @@ async function tryShowScheduled() {
   }
   if (sent.includes(slot)) return
   await markSlot(slot)
+  // Use slot-specific tag so morning and evening don't replace each other,
+  // and renotify:false ensures no duplicate if SW is woken multiple times.
+  const tag = slot === '09:00' ? 'cashhero-morning' : 'cashhero-evening'
   self.registration.showNotification('Cashhero', {
     body: slotMessage(slot),
     icon: '/cashhero-logo-192.png',
     badge: '/cashhero-logo-192.png',
-    tag: 'cashhero-scheduled',
+    tag,
+    renotify: false,
     vibrate: [200, 100, 200]
   })
 }
@@ -182,7 +132,9 @@ async function tryShowAuditReport() {
     icon: '/cashhero-logo-192.png',
     badge: '/cashhero-logo-192.png',
     tag: 'cashhero-audit-report',
-    vibrate: [200, 100, 200]
+    renotify: false,
+    vibrate: [200, 100, 200],
+    data: { link: '/statistics' }
   })
 }
 
@@ -200,12 +152,13 @@ self.addEventListener('activate', (event) => {
           .filter((key) => key !== CACHE_NAME && key !== NOTI_CACHE && key !== AUDIT_CACHE)
           .map((key) => caches.delete(key))
       )
-    ).then(() => {
-      // Start scheduled notification checker while SW is alive
-      tryShowScheduled()
-      setInterval(tryShowScheduled, 30 * 60 * 1000) // every 30 min
-      return self.clients.claim()
-    })
+    ).then(() => self.clients.claim())
+    // NOTE: Do NOT call tryShowScheduled() here.
+    // activate fires on every page load (when SW updates), which would
+    // cause a notification burst every time the user opens the browser.
+    // Scheduled notifications are driven by:
+    //   1. periodicsync event (browser Periodic Background Sync)
+    //   2. cron-job.org → /api/fcm/send → FCM push (primary path)
   )
 })
 
@@ -218,13 +171,19 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      const network = fetch(event.request).then((response) => {
-        if (response && response.status === 200) {
-          const clone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
-        }
-        return response
-      })
+      const network = fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+          }
+          return response
+        })
+        .catch(() => {
+          // Network unavailable (offline / timeout) — silently fall back to cache.
+          // If no cache exists for this request, the browser will show its own offline page.
+          return cached || Response.error()
+        })
       return cached || network
     })
   )

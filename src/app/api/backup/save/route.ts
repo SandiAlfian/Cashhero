@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getFirestoreDb, verifyIdTokenRest } from '@/lib/firebase-admin'
+import { backupSaveSchema } from '@/lib/validation'
+import { logger } from '@/lib/logger'
 
 const BACKUP_COLLECTION = 'user_backups'
 
@@ -14,8 +16,17 @@ export async function POST(req: Request) {
     const decoded = await verifyIdTokenRest(idToken)
     const uid = decoded.uid
 
-    const body = await req.json()
-    const { transactions, settings, budgets, goals, autoLogRules, trackedOutflows, portfolioAssets } = body
+    let body: unknown
+    try { body = await req.json() } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    }
+
+    const parsed = backupSaveSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
+    }
+
+    const { transactions, settings, budgets, goals, autoLogRules, trackedOutflows, portfolioAssets } = parsed.data
 
     const db = getFirestoreDb()
     if (!db) {
@@ -26,19 +37,19 @@ export async function POST(req: Request) {
       uid,
       backupVersion: 1,
       backedUpAt: new Date().toISOString(),
-      transactions: transactions || [],
-      settings: settings || null,
-      budgets: budgets || [],
-      goals: goals || [],
-      autoLogRules: autoLogRules || [],
-      trackedOutflows: trackedOutflows || [],
-      portfolioAssets: portfolioAssets || [],
+      transactions,
+      settings,
+      budgets,
+      goals,
+      autoLogRules,
+      trackedOutflows,
+      portfolioAssets,
     })
 
     return NextResponse.json({ ok: true, backedUpAt: new Date().toISOString() })
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'Backup failed'
-    console.error('[BACKUP SAVE ERROR]', msg)
+    logger.error('BackupSave', msg)
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

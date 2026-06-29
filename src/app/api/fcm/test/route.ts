@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getApps, initializeApp, cert } from 'firebase-admin/app'
 import { getMessaging } from 'firebase-admin/messaging'
 import { readTokens } from '@/lib/fcm-tokens'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -34,6 +35,7 @@ export async function GET() {
 
     return NextResponse.json({ ok: true, messageId: result })
   } catch (e) {
+    logger.error('FcmTest', 'Failed', e)
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }

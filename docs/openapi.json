@@ -1,0 +1,330 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Cashhero API",
+    "version": "0.1.0",
+    "description": "API documentation for Cashhero — Pahlawan Kelola Keuangan Pribadi"
+  },
+  "servers": [
+    { "url": "https://cashhero.vercel.app", "description": "Production" },
+    { "url": "http://localhost:3000", "description": "Local development" }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health check",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Server sehat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "ok" },
+                    "timestamp": { "type": "string", "format": "date-time" },
+                    "uptime": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/verify": {
+      "post": {
+        "summary": "Verifikasi Firebase ID token",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["idToken"],
+                "properties": {
+                  "idToken": { "type": "string", "description": "Firebase ID token" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token valid, mengembalikan data user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uid": { "type": "string" },
+                    "email": { "type": "string" },
+                    "name": { "type": "string" },
+                    "picture": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid JSON body / idToken required" },
+          "401": { "description": "Token verification failed" }
+        }
+      }
+    },
+    "/api/backup/save": {
+      "post": {
+        "summary": "Backup data user ke Firestore",
+        "tags": ["Backup"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactions": { "type": "array" },
+                  "settings": { "type": "object", "nullable": true },
+                  "budgets": { "type": "array" },
+                  "goals": { "type": "array" },
+                  "autoLogRules": { "type": "array" },
+                  "trackedOutflows": { "type": "array" },
+                  "portfolioAssets": { "type": "array" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Backup berhasil",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "backedUpAt": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Missing or invalid authorization header" },
+          "500": { "description": "Firestore not available / backup failed" }
+        }
+      }
+    },
+    "/api/backup/restore": {
+      "post": {
+        "summary": "Restore data user dari Firestore",
+        "tags": ["Backup"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Data restore berhasil atau data tidak ditemukan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "exists": { "type": "boolean" },
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "backedUpAt": { "type": "string" },
+                        "transactions": { "type": "array" },
+                        "settings": { "type": "object" },
+                        "budgets": { "type": "array" },
+                        "goals": { "type": "array" },
+                        "autoLogRules": { "type": "array" },
+                        "trackedOutflows": { "type": "array" },
+                        "portfolioAssets": { "type": "array" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Missing or invalid authorization header" },
+          "500": { "description": "Firestore not available / restore failed" }
+        }
+      }
+    },
+    "/api/fcm/register": {
+      "post": {
+        "summary": "Register atau unregister FCM token",
+        "tags": ["Notifications"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["token"],
+                "properties": {
+                  "token": { "type": "string", "description": "FCM device token" },
+                  "lang": { "type": "string", "enum": ["id", "en"], "default": "id" },
+                  "filter": {
+                    "type": "string",
+                    "enum": ["weekly", "monthly", "quarterly", "yearly"],
+                    "default": "monthly"
+                  },
+                  "remove": { "type": "boolean", "default": false, "description": "Jika true, hapus token" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Token registered/unregistered" },
+          "400": { "description": "Token required / invalid JSON" }
+        }
+      }
+    },
+    "/api/fcm/send": {
+      "get": {
+        "summary": "Kirim notifikasi push (cron endpoint)",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["morning", "evening", "audit"] },
+            "default": "morning"
+          },
+          {
+            "name": "key",
+            "in": "query",
+            "schema": { "type": "string" },
+            "required": true,
+            "description": "CRON_SECRET untuk autentikasi"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Notifikasi terkirim" },
+          "401": { "description": "Invalid CRON_SECRET" }
+        }
+      }
+    },
+    "/api/fcm/test": {
+      "get": {
+        "summary": "Kirim test notifikasi ke token terbaru",
+        "tags": ["Notifications"],
+        "responses": {
+          "200": { "description": "Test notification sent" },
+          "400": { "description": "No registered tokens" },
+          "500": { "description": "FCM not configured" }
+        }
+      }
+    },
+    "/api/fcm/recurring/check": {
+      "get": {
+        "summary": "Cek recurring rules & kirim notifikasi (cron endpoint)",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "schema": { "type": "string" },
+            "required": true,
+            "description": "CRON_SECRET untuk autentikasi"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Notifikasi recurring terkirim" },
+          "401": { "description": "Invalid CRON_SECRET" }
+        }
+      }
+    },
+    "/api/fcm/recurring/sync": {
+      "post": {
+        "summary": "Sync recurring rules dari client ke Firestore",
+        "tags": ["Notifications"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["fcmToken", "rules"],
+                "properties": {
+                  "fcmToken": { "type": "string" },
+                  "rules": { "type": "array" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Rules synced" },
+          "400": { "description": "fcmToken required" }
+        }
+      }
+    },
+    "/api/fcm/recurring/state": {
+      "post": {
+        "summary": "Ambil recurring rules untuk token tertentu",
+        "tags": ["Notifications"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["fcmToken"],
+                "properties": {
+                  "fcmToken": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Rules returned" },
+          "400": { "description": "fcmToken required" }
+        }
+      }
+    },
+    "/api/fcm/recurring/action": {
+      "post": {
+        "summary": "Handle confirm/skip/reject pada transaksi berulang",
+        "tags": ["Notifications"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["fcmToken", "pendingId", "action"],
+                "properties": {
+                  "fcmToken": { "type": "string" },
+                  "pendingId": { "type": "string", "description": "Format: ruleId-dueDate (e.g., abc123-2026-06-25)" },
+                  "action": { "type": "string", "enum": ["confirm", "skip", "reject"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Action processed" },
+          "400": { "description": "Invalid input" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Firebase ID token"
+      }
+    }
+  }
+}

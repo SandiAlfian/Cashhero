@@ -7,13 +7,15 @@
     "dev:clean": "node -e \"fs.rmSync('.next', { recursive: true, force: true })\" && next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "prepare": "husky"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
+    "@sentry/nextjs": "^10.62.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-
     "firebase": "^12.14.0",
     "firebase-admin": "^14.0.0",
     "framer-motion": "^12.40.0",
@@ -22,10 +24,10 @@
     "next-themes": "^0.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-
+    "sharp": "^0.34.5",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7",
-
+    "zod": "^4.4.3",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
@@ -36,9 +38,16 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.18",
-    "sharp": "^0.34.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
+    "prettier": "^3.9.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.9"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,mjs}": "eslint --fix",
+    "*.{json,md}": "prettier --write"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
